@@ -58,6 +58,15 @@ Playwright ejecuta Chromium, Firefox y WebKit. Los fallos conservan trazas
 y capturas en directorios ignorados por Git. Para examinar el informe:
 `pnpm exec playwright show-report`.
 
+Para comprobar solo Chromium y Firefox en un sistema que no tenga las
+bibliotecas de WebKit:
+
+```sh
+pnpm test:e2e --project=chromium --project=firefox
+```
+
+La CI ejecuta siempre los tres motores en Ubuntu 24.04.
+
 ## CI y publicación
 
 GitHub Actions comprueba cada push y pull request. La publicación en GitHub
