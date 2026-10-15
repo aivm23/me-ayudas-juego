@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#a9d4d6">
+    <meta name="description" content="Acompaña a un pequeño conejo a través de un cuento ilustrado. Un juego tranquilo con flechas, saltos y la ayuda de muchos amigos.">
+    <title>¿Me ayudas? · Un cuento para jugar</title>
+    <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml">
+    <link rel="preload" href="./assets/fonts/londrina-solid.ttf" as="font" type="font/ttf" crossorigin>
+    <link rel="stylesheet" href="./styles.css">
+    <script type="module" src="./src/app.js"></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#play-area">Ir al juego</a>
+    <div class="book">
+      <header class="book-header">
+        <a class="wordmark" href="./" aria-label="¿Me ayudas? Inicio">¿Me ayudas?</a>
+        <span class="header-note">Un cuento para jugar juntos</span>
+        <nav class="tools" aria-label="Opciones del cuento">
+          <button id="map-button" class="quiet-button" aria-label="Ver el mapa" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 5 6-2 6 2 6-2v16l-6 2-6-2-6 2V5Zm6-2v16m6-14v16"/></svg><span>El mapa</span></button>
+          <button id="pause-button" class="quiet-button" aria-label="Pausar" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14M16 5v14"/></svg><span>Pausar</span></button>
+        </nav>
+      </header>
+
+      <main id="play-area" tabindex="-1">
+        <section class="spread" aria-label="Cuento interactivo">
+          <canvas id="game-canvas" width="1280" height="720" role="img" aria-label="Un conejo blanco al comienzo de un camino ilustrado"></canvas>
+          <div class="book-fold" aria-hidden="true"></div>
+
+          <div id="intro" class="intro">
+            <h1 aria-label="¿Me ayudas?"><span>¿Me</span> <span>ayudas?</span></h1>
+            <p>Un pequeño conejo.<br>Un camino enorme.<br>Muchos amigos por descubrir.</p>
+            <button id="start-button" class="primary-button">Empezar el cuento <kbd aria-hidden="true">espacio</kbd></button>
+            <p class="intro-credit">A partir del cuento de<br>Raúl Bermejo y Nacho Uve</p>
+          </div>
+
+          <div id="scene-label" class="scene-label" hidden><span id="chapter-number"></span><h1 data-testid="scene-title">El primer salto</h1></div>
+          <p id="speech" class="speech" aria-live="polite" hidden></p>
+
+          <div id="pause-panel" class="overlay pause-panel" role="dialog" aria-modal="true" aria-labelledby="pause-title" hidden>
+            <div><span class="small-drawing" aria-hidden="true">❧</span><h2 id="pause-title">Un pequeño descanso</h2><p>El camino te espera.</p><button id="resume-button" class="primary-button">Continuar <kbd aria-hidden="true">espacio</kbd></button><button id="restart-button" class="text-button">Volver al principio</button></div>
+          </div>
+
+          <div id="map-panel" class="map-panel" role="dialog" aria-modal="true" aria-labelledby="map-title" hidden>
+            <div class="map-heading"><h2 id="map-title">Todo un camino juntos</h2><button id="close-map" class="quiet-button">Cerrar el mapa <span aria-hidden="true">×</span></button></div>
+            <p id="map-description">Cada amigo tiene algo que enseñarnos.</p>
+            <ol id="map-legend" class="map-legend" aria-label="Pantallas del cuento"></ol>
+          </div>
+
+          <div id="ending-panel" class="ending-panel" hidden>
+            <p class="ending-small">Y al final del camino…</p><h2>¡Un nuevo amigo!</h2><p>Con un poco de ayuda,<br>hemos llegado muy lejos.</p><div class="ending-buttons"><button id="again-button" class="primary-button">Jugar otra vez</button><button id="ending-map" class="text-button">Ver nuestro camino</button></div>
+          </div>
+        </section>
+
+        <div class="reading-line">
+          <p id="hint" data-testid="hint" aria-live="polite">Abre el cuento y acompaña al conejo.</p>
+          <span id="page-number" aria-label="Pantalla del cuento">Un paso, una historia</span>
+        </div>
+
+        <div class="touch-controls" aria-label="Controles táctiles">
+          <div><button type="button" data-control="left" aria-label="Mover a la izquierda">←</button><button type="button" data-control="right" aria-label="Mover a la derecha">→</button><button type="button" data-control="down" aria-label="Agacharse">↓</button></div>
+          <button type="button" data-control="action" class="touch-action" aria-label="Saltar o pedir ayuda">Saltar / ayudar</button>
+        </div>
+      </main>
+
+      <footer class="book-footer">
+        <p class="keyboard-guide"><span><kbd>←</kbd> <kbd>→</kbd> caminar</span><span><kbd>↓</kbd> agacharse</span><span><kbd>espacio</kbd> saltar o ayudar</span><span><kbd>esc</kbd> descansar</span></p>
+        <span class="footer-note">Sin prisa. Mejor en compañía.</span>
+      </footer>
+    </div>
+
+    <dialog id="restart-dialog" aria-labelledby="restart-title">
+      <h2 id="restart-title">¿Volvemos al principio?</h2><p>El cuento empezará de nuevo.</p>
+      <div><button id="cancel-restart" class="quiet-button">Seguir jugando</button><button id="confirm-restart" class="primary-button">Empezar de nuevo</button></div>
+    </dialog>
+    <span id="game-state" data-testid="game-state" class="visually-hidden" data-scene="0" data-mode="title" data-x="120" data-y="560" data-helped="false" data-ducking="false"></span>
+    <noscript><p class="no-script">Este cuento necesita JavaScript. Actívalo en tu navegador para jugar.</p></noscript>
+  </body>
+</html>

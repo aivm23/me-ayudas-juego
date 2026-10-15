@@ -1,0 +1,19 @@
+{
+  "name": "me-ayudas-juego",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Un cuento jugable con HTML, CSS y JavaScript.",
+  "type": "module",
+  "engines": { "node": "24.16.0" },
+  "packageManager": "pnpm@11.19.0",
+  "scripts": {
+    "dev": "node scripts/server.js",
+    "check": "node scripts/check.js",
+    "test": "node --test tests/engine.test.js scripts/server.test.js",
+    "test:e2e": "node scripts/build-pages.js && playwright test",
+    "verify": "pnpm check && pnpm test && pnpm test:e2e"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.64.1"
+  }
+}

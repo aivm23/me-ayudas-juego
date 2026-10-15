@@ -1,0 +1,7 @@
+node_modules/
+playwright-report/
+test-results/
+coverage/
+_site/
+*.log
+.DS_Store
