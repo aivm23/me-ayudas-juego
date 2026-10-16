@@ -73,6 +73,8 @@ elefante, el descenso por el túnel, la marcha y el retorno entre los juncos,
 la salida de la madriguera, la pared previa, el zoom que revela la montaña,
 el ascenso de la serpiente y la entrada, recogida y retirada del conejo marrón
 antes de la marcha conjunta hacia el huerto.
+También comprueba las pulsaciones anteriores al primer fotograma y que
+dibujar a 10 FPS conserve la velocidad de movimiento y las colisiones.
 La fidelidad de las ilustraciones se revisa con capturas del juego y los
 fotogramas originales; los atributos de estado prueban las reglas y la
 progresión. Los fallos conservan trazas y capturas en directorios ignorados

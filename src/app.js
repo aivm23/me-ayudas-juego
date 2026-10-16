@@ -281,7 +281,7 @@ function updateUI(force = false) {
 }
 
 function frame(timestamp) {
-  const dt = lastTime ? Math.min((timestamp - lastTime) / 1000, 1 / 30) : 0;
+  const dt = lastTime ? Math.min((timestamp - lastTime) / 1000, 1 / 10) : 0;
   lastTime = timestamp;
   if (dt > 0 && !paused && !mapOpen && state.mode === 'playing' && !$('#restart-dialog').open) {
     updateGame(state, {

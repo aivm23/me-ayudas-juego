@@ -209,11 +209,49 @@ test('direcciones opuestas se cancelan y nunca generan coordenadas inválidas', 
 test('un delta enorme se limita y una pulsación no se duplica entre subpasos', () => {
   const ordinary = reachScene('piedra');
   const suspended = reachScene('piedra');
-  updateGame(ordinary, { right: true, action: true }, 1 / 30);
+  updateGame(ordinary, { right: true, action: true }, 1 / 10);
   updateGame(suspended, { right: true, action: true }, 20);
   assert.deepEqual(suspended, ordinary);
   assert.ok(suspended.y < GROUND && suspended.vy < 0);
   assert.equal(suspended.grounded, false);
+});
+
+test('diez y sesenta fotogramas por segundo conservan distancia, salto y colisiones', () => {
+  for (const jumping of [false, true]) {
+    const smooth = reachScene('piedra');
+    const slow = reachScene('piedra');
+    for (let frame = 0; frame < 60; frame += 1) {
+      updateGame(smooth, { right: true, action: jumping && frame === 0 }, 1 / 60);
+    }
+    for (let frame = 0; frame < 10; frame += 1) {
+      updateGame(slow, { right: true, action: jumping && frame === 0 }, 1 / 10);
+    }
+    assert.deepEqual(slow, smooth, 'La frecuencia de dibujo no cambia el tiempo ni la física de los subpasos');
+    assert.ok(slow.x > 340, 'Un segundo a diez FPS permite avanzar a velocidad normal');
+    assert.equal(slow.y, GROUND);
+    assert.equal(slow.grounded, true);
+    for (let frame = 0; frame < 72; frame += 1) updateGame(smooth, RIGHT, 1 / 60);
+    for (let frame = 0; frame < 12; frame += 1) updateGame(slow, RIGHT, 1 / 10);
+    assert.deepEqual(slow, smooth, 'Los subpasos también conservan el contacto con una pared sólida');
+    assert.equal(slow.x, currentGeometry(slow).rock.x - RADIUS);
+    assert.equal(slow.vx, 0);
+    assert.equal(slow.solved, false);
+  }
+});
+
+test('una pulsación aérea en un fotograma largo se consume antes de aterrizar y no dispara otro salto', () => {
+  const state = reachScene('piedra');
+  pulse(state, 'up');
+  until(state, current => !current.grounded && current.vy > 0 && current.y > GROUND - 10, {});
+  const smooth = structuredClone(state);
+  updateGame(state, { action: true }, 1 / 10);
+  for (let frame = 0; frame < 6; frame += 1) {
+    updateGame(smooth, { action: frame === 0 }, 1 / 60);
+  }
+  assert.deepEqual(state, smooth);
+  assert.equal(state.y, GROUND, 'Aterrizar dentro de los doce subpasos no reutiliza espacio');
+  assert.equal(state.vy, 0);
+  assert.equal(state.grounded, true);
 });
 
 test('el salto alcanza unos 130 píxeles, vuelve al suelo y no permite salto aéreo', () => {

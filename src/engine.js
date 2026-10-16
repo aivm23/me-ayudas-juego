@@ -470,7 +470,7 @@ export function updateGame(state, input = {}, dt = 0) {
   if (state.mode !== 'playing' || !Number.isFinite(dt) || dt <= 0) return state;
   // Cap suspended-tab deltas, then use short collision steps. Pulsed actions
   // are consumed only once even when an update contains multiple substeps.
-  const duration = Math.min(dt, 1 / 30);
+  const duration = Math.min(dt, 1 / 10);
   const count = Math.ceil(duration / (1 / 120));
   const initialScene = state.scene;
   for (let i = 0; i < count && state.mode === 'playing'; i += 1) {

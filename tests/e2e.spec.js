@@ -75,6 +75,30 @@ test('conserva el espacio pulsado antes del primer fotograma', async ({ page }) 
   await page.clock.resume();
 });
 
+test('mantiene la velocidad al dibujar diez fotogramas por segundo', async ({ page }) => {
+  const clockStart = new Date('2026-01-01T12:00:00Z');
+  await page.clock.install({ time: clockStart });
+  await page.clock.pauseAt(new Date(clockStart.getTime() + 1000));
+  await page.addInitScript(() => {
+    // Solo se limita el dibujo del navegador; las reglas y entradas son reales.
+    window.requestAnimationFrame = callback => window.setTimeout(() => callback(performance.now()), 100);
+    window.cancelAnimationFrame = handle => window.clearTimeout(handle);
+  });
+  await start(page, true, true);
+  await page.keyboard.press('Space');
+  await page.clock.runFor(1000);
+  expect(await number(page, 'emerge-progress')).toBe(1);
+  const initialX = await number(page, 'x');
+  await page.keyboard.down('ArrowRight');
+  await page.clock.runFor(500);
+  await page.keyboard.up('ArrowRight');
+  const distance = await number(page, 'x') - initialX;
+  // Cinco frames deben representar medio segundo de marcha con aceleración.
+  expect(distance).toBeGreaterThan(100);
+  expect(distance).toBeLessThan(140);
+  await page.clock.resume();
+});
+
 test('teclado, salto, pausa, mapa y reinicio accesible', async ({ page }) => {
   const errors = [];
   page.on('pageerror', (error) => errors.push(error.message));
