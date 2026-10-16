@@ -283,13 +283,15 @@ function updateUI(force = false) {
 function frame(timestamp) {
   const dt = lastTime ? Math.min((timestamp - lastTime) / 1000, 1 / 30) : 0;
   lastTime = timestamp;
-  if (!paused && !mapOpen && state.mode === 'playing' && !$('#restart-dialog').open) {
+  if (dt > 0 && !paused && !mapOpen && state.mode === 'playing' && !$('#restart-dialog').open) {
     updateGame(state, {
       left: held.has('left'), right: held.has('right'), down: held.has('down'),
       up: pulses.has('up'), action: pulses.has('action'),
     }, dt);
+    // A key can arrive before the first animation frame, whose delta is zero.
+    // Consume its pulse only after the simulation has actually advanced.
+    pulses.clear();
   }
-  pulses.clear();
   updateUI();
   renderer.render(state, { reducedMotion: motion.matches || paused, map: mapOpen });
   requestAnimationFrame(frame);

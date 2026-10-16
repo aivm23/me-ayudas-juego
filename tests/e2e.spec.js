@@ -60,6 +60,21 @@ async function leaveScene(page, next, { width = 1280, ...options } = {}) {
   await expect(state(page)).toHaveAttribute('data-scene-id', next);
 }
 
+test('conserva el espacio pulsado antes del primer fotograma', async ({ page }) => {
+  const clockStart = new Date('2026-01-01T12:00:00Z');
+  await page.clock.install({ time: clockStart });
+  await page.clock.pauseAt(new Date(clockStart.getTime() + 1000));
+  await start(page, true, true);
+  expect(await number(page, 'emerge-progress')).toBe(0);
+  await page.keyboard.press('Space');
+  // El primer RAF tiene dt=0: el pulso debe llegar al siguiente paso real.
+  await page.clock.runFor(32);
+  expect(await number(page, 'emerge-progress')).toBeGreaterThan(0);
+  await page.clock.runFor(800);
+  expect(await number(page, 'emerge-progress')).toBe(1);
+  await page.clock.resume();
+});
+
 test('teclado, salto, pausa, mapa y reinicio accesible', async ({ page }) => {
   const errors = [];
   page.on('pageerror', (error) => errors.push(error.message));

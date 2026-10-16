@@ -1149,7 +1149,7 @@ export function createRenderer(canvas) {
       return;
     }
     const planted = id === 'zanahoria' && !state.carrotTaken;
-    const key = `${id}:${ending}:${title}:${planted}`;
+    const key = night ? (ending ? 'guarda-final' : 'guarda-inicial') : `${id}:${planted}`;
     if (!scenes.has(key)) scenes.set(key, background(scene, paper, { ending, title, planted, hideSun: id === 'conejo' }));
     const layer = scenes.get(key);
     ctx.drawImage(layer.sky, 0, 0);
