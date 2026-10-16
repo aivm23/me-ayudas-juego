@@ -152,14 +152,16 @@ function rock(ctx, x, width, top, paper, seed = 8, base = GROUND) {
 
 function ground(ctx, scene, paper, options = {}) {
   const width = options.width || WIDTH;
-  const isDusk = options.ending || scene >= 8;
-  const topColor = options.ending ? '#554741' : options.plateau ? '#a8a499' : scene >= 7 ? '#928357' : scene >= 3 ? '#8c7252' : '#7e8055';
-  const gradient = ctx.createLinearGradient(0, GROUND, 0, HEIGHT);
+  const bottom = options.bottom || HEIGHT;
+  const id = SCENES[scene]?.id;
+  const isDusk = options.ending || ['pared', 'serpiente', 'zanahoria', 'conejo'].includes(id);
+  const topColor = options.ending ? '#554741' : options.plateau ? '#a8a499' : ['juncos', 'pared', 'serpiente'].includes(id) ? '#928357' : ['elefante', 'charco', 'jirafa', 'cocodrilo'].includes(id) ? '#8c7252' : '#7e8055';
+  const gradient = ctx.createLinearGradient(0, GROUND, 0, bottom);
   gradient.addColorStop(0, topColor);
   gradient.addColorStop(0.32, options.ending ? '#49423a' : options.plateau ? '#aaa69b' : '#8b7c50');
   gradient.addColorStop(1, options.ending ? '#292e2d' : options.plateau ? '#939186' : isDusk ? '#716647' : '#78764b');
-  const p = new Path2D(`M0 ${GROUND} C230 ${GROUND - 1},370 ${GROUND + 2},540 ${GROUND} C850 ${GROUND + 2},1070 ${GROUND - 2},${width} ${GROUND} L${width} 720 L0 720Z`);
-  paint(ctx, p, gradient, [0, GROUND - 3, width, HEIGHT - GROUND + 3], paper, 671 + scene, 1.5);
+  const p = new Path2D(`M0 ${GROUND} C230 ${GROUND - 1},370 ${GROUND + 2},540 ${GROUND} C850 ${GROUND + 2},1070 ${GROUND - 2},${width} ${GROUND} L${width} ${bottom} L0 ${bottom}Z`);
+  paint(ctx, p, gradient, [0, GROUND - 3, width, bottom - GROUND + 3], paper, 671 + scene, 1.5);
   const rng = random(719 + scene);
   ctx.save();
   ctx.clip(p);
@@ -282,6 +284,10 @@ function bird(ctx, x, feet, paper) {
 }
 
 function fox(ctx, x, feet, paper, helped = false) {
+  if (helped) {
+    foxLookingDown(ctx, x, feet, paper);
+    return;
+  }
   ctx.save();
   ctx.translate(x, feet);
   // Cola curvada y patas largas: la silueta sentada del zorro del cuento.
@@ -300,9 +306,36 @@ function fox(ctx, x, feet, paper, helped = false) {
   shape(ctx, 'M-22 -120 L-11 -123 L-15 -117Z M-4 -123 L8 -126 L2 -120Z', '#eee8d4');
   line(ctx, 'M-17 -122 l-1 4 M2 -125 l-1 4', '#252a27', 1.6);
   line(ctx, 'M-39 -100 l-18 -3 M-39 -97 l-17 3 M-35 -105 l-15 -6', '#393630', 0.85);
-  if (helped) {
-    line(ctx, 'M28 3 q10 2 16 -3 M34 10 q10 1 16 -5', '#d7bc8d66', 1.3);
-  }
+  ctx.restore();
+}
+
+function foxLookingDown(ctx, x, feet, paper) {
+  ctx.save();
+  ctx.translate(x, feet);
+  // En el cuento se sujeta a la piedra con las patas traseras y apoya
+  // las delanteras junto al túnel. La cabeza conserva las orejas arriba:
+  // esta postura necesita otra silueta, no dar la vuelta al zorro sentado.
+  const tail = new Path2D('M35 -222 C44 -249 18 -266 -12 -264 C-30 -263 -46 -269 -48 -279 C-18 -296 20 -279 37 -259 Q48 -242 43 -221Z');
+  paint(ctx, tail, '#632f31', [-49, -289, 99, 69], paper, 105, 1.3);
+  shape(ctx, 'M-48 -279 Q-37 -285 -26 -284 L-20 -265 Q-38 -267 -48 -279Z', '#a96952');
+  line(ctx, 'M-37 -282 L-31 -269 M-28 -284 L-22 -266', '#d1a18355', 2);
+  shape(ctx, 'M39 -222 Q73 -235 104 -198 L97 -175 Q91 -170 89 -178 L94 -196 L48 -209Z', '#562e2d');
+  const body = new Path2D('M-1 -79 C3 -116 7 -168 11 -199 C14 -221 29 -239 46 -229 C61 -220 59 -203 51 -185 C39 -154 27 -119 22 -88 L12 -66Z');
+  paint(ctx, body, '#7b3034', [-3, -234, 65, 173], paper, 106, 1.5);
+  shape(ctx, 'M44 -222 Q74 -226 96 -192 L88 -154 Q82 -149 80 -158 L85 -191 L47 -208Z', '#642d2f');
+  line(ctx, 'M62 -212 L90 -191 L84 -158', '#a0614d', 1.3);
+  shape(ctx, 'M20 -166 Q10 -138 9 -101 L19 -91 Q27 -129 29 -155Z', '#b46d52');
+  // Dos apoyos estrechos y firmes, justo en el borde de la boca izquierda.
+  shape(ctx, 'M2 -89 L7 -3 Q11 1 16 -2 L15 -85 M17 -90 L21 -3 Q26 1 31 -2 L26 -89Z', '#562e2d');
+  line(ctx, 'M12 -78 L13 -7 M25 -78 L27 -7', '#ad735c', 1.4);
+  const head = new Path2D('M-8 -64 L-25 -80 L-23 -57 L-43 -68 L-35 -45 L-14 -8 L4 -29 L11 -59 L0 -68Z');
+  paint(ctx, head, '#8e3437', [-44, -81, 58, 74], paper, 107, 1.1);
+  shape(ctx, 'M-23 -72 L-14 -62 L-21 -60Z M-38 -62 L-27 -53 L-31 -48Z', '#d18c85');
+  shape(ctx, 'M-28 -44 L-5 -49 L3 -33 L-14 -9Z', '#b9564e');
+  shape(ctx, 'M-28 -45 L-17 -46 L-23 -39Z M-8 -50 L2 -53 L-1 -45Z', '#eee8d4');
+  line(ctx, 'M-23 -44 l1 4 M-2 -51 l0 5', '#252a27', 1.6);
+  shape(ctx, 'M-17 -12 L-11 -13 L-14 -6Z', '#292f2d');
+  line(ctx, 'M-18 -17 l-15 4 M-17 -21 l-18 -2 M-9 -19 l14 -6 M-10 -15 l14 1', '#393630', 0.85);
   ctx.restore();
 }
 
@@ -557,13 +590,13 @@ function reeds(ctx, paper, foreground = false, extent = { left: 380, right: 2160
   }
 }
 
-function cliff(ctx, paper, x = 850, top = -220, bottom = HEIGHT) {
-  const path = new Path2D(`M${x + 34} ${top} Q${x - 10} ${top + 8},${x - 2} ${top + 67} C${x + 11} ${top + 151},${x - 8} ${top + 267},${x + 8} ${bottom} L1280 ${bottom} L1280 ${top}Z`);
+function cliff(ctx, paper, x = 850, top = -220, bottom = HEIGHT, right = WIDTH) {
+  const path = new Path2D(`M${x + 34} ${top} Q${x - 10} ${top + 8},${x - 2} ${top + 67} C${x + 11} ${top + 151},${x - 8} ${top + 267},${x + 8} ${bottom} L${right} ${bottom} L${right} ${top}Z`);
   const gradient = ctx.createLinearGradient(x, top, 1210, bottom);
   gradient.addColorStop(0, '#b7ad9e');
   gradient.addColorStop(0.48, '#a49b8c');
   gradient.addColorStop(1, '#928b7b');
-  paint(ctx, path, gradient, [x - 12, top, WIDTH - x + 24, bottom - top], paper, 160, 1.9);
+  paint(ctx, path, gradient, [x - 12, top, right - x + 24, bottom - top], paper, 160, 1.9);
   ctx.save();
   ctx.clip(path);
   const rng = random(161);
@@ -574,10 +607,12 @@ function cliff(ctx, paper, x = 850, top = -220, bottom = HEIGHT) {
     ellipse(ctx, xx - 4, yy + 30, 8 + rng() * 11, 17 + rng() * 22, '#dcd1b816', rng());
   }
   ctx.restore();
-  line(ctx, `M${x + 31} ${top + 1} Q1060 ${top - 2} 1280 ${top}`, '#d7ccaf75', 2);
+  line(ctx, `M${x + 31} ${top + 1} Q1060 ${top - 2} ${right} ${top}`, '#d7ccaf75', 2);
 }
 
-function snakeTree(ctx, paper) {
+function snakeTree(ctx, paper, treeY = 190) {
+  ctx.save();
+  ctx.translate(0, treeY - 190);
   // Una ramita nace del costado de la montaña, lejos de la cima.
   const branch = new Path2D('M866 187 Q823 190 783 178 Q755 170 719 174 L717 182 Q752 178 777 188 Q822 201 866 201Z');
   paint(ctx, branch, '#72684f', [713, 165, 156, 40], paper, 163, 1.4);
@@ -589,6 +624,7 @@ function snakeTree(ctx, paper) {
     paint(ctx, 'M0 8 Q-13 0 -8 -13 Q0 -22 4 -9 Q15 -15 14 -6 Q15 4 0 8Z', '#64724d', [-14, -22, 31, 33], paper, 164 + xx, 0.8);
     ctx.restore();
   }
+  ctx.restore();
 }
 
 const snakePatterns = new WeakMap();
@@ -625,6 +661,7 @@ function snakeStroke(ctx, definition) {
 }
 
 function snake(ctx, paper, state) {
+  const branchY = SCENE_GEOMETRY[state.scene]?.tree?.y ?? 190;
   const progress = clamp(state.helpProgress || 0, 0, 1);
   const lowering = ease(clamp(progress / 0.32, 0, 1));
   const active = Boolean(state.helped);
@@ -633,19 +670,22 @@ function snake(ctx, paper, state) {
   let head;
   let body;
   if (!active) {
-    head = { x: 771, y: 231 };
-    body = 'M823 190 C791 191 805 209 803 220 Q797 240 771 231';
+    head = { x: 771, y: branchY + 41 };
+    body = `M823 ${branchY} C791 ${branchY + 1} 805 ${branchY + 19} 803 ${branchY + 30} Q797 ${branchY + 50} 771 ${branchY + 41}`;
   } else if (progress < 0.32) {
-    head = { x: mix(771, feetX - 27, lowering), y: mix(231, GROUND - 55, lowering) };
-    body = `M823 190 C778 192,${head.x + 43} ${head.y - 128},${head.x + 27} ${head.y - 13} Q${head.x + 18} ${head.y + 6},${head.x} ${head.y}`;
+    head = { x: mix(771, feetX - 27, lowering), y: mix(branchY + 41, GROUND - 55, lowering) };
+    body = `M823 ${branchY} C778 ${branchY + 2},${head.x + 43} ${head.y - 128},${head.x + 27} ${head.y - 13} Q${head.x + 18} ${head.y + 6},${head.x} ${head.y}`;
   } else {
     const raised = ease(clamp((progress - 0.32) / 0.68, 0, 1));
     head = { x: feetX - 32, y: feetY - mix(55, 100, raised) };
-    body = `M823 190 C764 193,${feetX + 90} ${feetY + 42},${feetX + 25} ${feetY + 20} Q${feetX - 5} ${feetY + 16},${feetX - 7} ${feetY - 8} C${feetX - 9} ${feetY - 44},${head.x + 32} ${head.y + 11},${head.x} ${head.y}`;
+    body = `M823 ${branchY} C764 ${branchY + 3},${feetX + 90} ${feetY + 42},${feetX + 25} ${feetY + 20} Q${feetX - 5} ${feetY + 16},${feetX - 7} ${feetY - 8} C${feetX - 9} ${feetY - 44},${head.x + 32} ${head.y + 11},${head.x} ${head.y}`;
   }
   snakeStroke(ctx, body);
   // Tres vueltas se quedan ancladas a la rama durante toda la ayuda.
+  ctx.save();
+  ctx.translate(0, branchY - 190);
   snakeStroke(ctx, 'M852 191 C844 160 822 165 823 190 C822 220 803 222 800 195 C797 166 777 166 776 190 C776 215 757 211 759 185 C761 163 744 164 743 180');
+  ctx.restore();
   ctx.save();
   ctx.translate(head.x, head.y);
   const face = new Path2D('M13 -10 Q-4 -17 -22 -9 Q-36 -4 -30 5 Q-26 13 -8 10 L15 6Z');
@@ -733,16 +773,104 @@ function loneCarrot(ctx, paper, planted) {
   }
 }
 
+function nightSky(ctx, paper, ending) {
+  const sky = ctx.createLinearGradient(0, 0, 0, GROUND);
+  sky.addColorStop(0, '#202530');
+  sky.addColorStop(0.52, '#2b3340');
+  sky.addColorStop(1, '#657a86');
+  ctx.fillStyle = sky;
+  ctx.fillRect(0, 0, WIDTH, HEIGHT);
+  const rng = random(312);
+  for (let i = 0; i < 780; i += 1) {
+    const x = rng() * WIDTH;
+    const y = rng() * 510;
+    const opacity = (0.12 + rng() * 0.46) * (1 - y / 680);
+    ctx.fillStyle = `rgba(230,232,221,${opacity})`;
+    ctx.fillRect(x, y, 0.45 + rng() * 1.25, 0.5 + rng() * 1.1);
+  }
+  if (!ending) {
+    const halo = ctx.createRadialGradient(1090, 168, 12, 1090, 168, 90);
+    halo.addColorStop(0, '#ede5db32');
+    halo.addColorStop(0.5, '#d2d4dc16');
+    halo.addColorStop(1, '#d2d4dc00');
+    ctx.fillStyle = halo;
+    ctx.fillRect(990, 68, 200, 200);
+    const moon = new Path2D();
+    moon.ellipse(1090, 168, 31, 32, -0.06, 0, Math.PI * 2);
+    paint(ctx, moon, '#ded9d6', [1057, 133, 66, 69], paper, 313, 1);
+    ctx.save();
+    ctx.clip(moon);
+    line(ctx, 'M1054 159 Q1090 151 1128 159 M1054 174 Q1094 168 1127 177', '#a1a5b325', 6);
+    ctx.restore();
+  } else cloud(ctx, 850, 79, 150, 24, paper, '#718995');
+  ctx.save();
+  ctx.globalAlpha = 0.35;
+  ctx.fillStyle = paper;
+  ctx.fillRect(0, 0, WIDTH, HEIGHT);
+  ctx.restore();
+}
+
+function burrowEars(ctx, x, y, paper, brown = false) {
+  ctx.save();
+  ctx.translate(x, y);
+  const ears = new Path2D('M-12 1 Q-14 -12 -18 -35 Q-19 -45 -14 -44 Q-9 -43 -7 -32 L-3 -1 L1 -1 Q4 -19 8 -36 Q10 -45 15 -42 Q18 -40 15 -30 L10 2Z');
+  paint(ctx, ears, brown ? '#b58260' : '#e7dedb', [-20, -46, 40, 49], paper, brown ? 316 : 315, 0.8);
+  line(ctx, 'M-8 -3 Q-12 -27 -14 -38 M6 -3 Q9 -27 12 -37', brown ? '#87594d' : '#bd919c', 3.4);
+  ctx.restore();
+}
+
+function nightGround(ctx, paper, ending) {
+  const moundX = ending ? 972 : 170;
+  const soil = new Path2D(`M0 ${GROUND} L${moundX - 82} ${GROUND} Q${moundX - 34} ${GROUND - 3} ${moundX - 23} ${GROUND - 17} Q${moundX} ${GROUND - 27} ${moundX + 32} ${GROUND - 14} Q${moundX + 53} ${GROUND} ${moundX + 89} ${GROUND} L1280 ${GROUND} L1280 720 L0 720Z`);
+  paint(ctx, soil, '#24292b', [0, GROUND - 30, WIDTH, 190], paper, 318, 1.3);
+  if (!ending) {
+    ellipse(ctx, 927, GROUND - 12, 21, 14, '#252a2d', -0.12);
+    grass(ctx, 966, GROUND, 0.35, '#29383a');
+    return;
+  }
+  // Las guardas muestran el huerto entero, con raíces apenas sobre la tierra.
+  for (let i = 0; i < 20; i += 1) {
+    const x = 34 + i * 63;
+    if (x > 890 && x < 1055) continue;
+    const height = 72 + Math.sin(i * 7.1) * 12;
+    const stalk = GROUND - height;
+    line(ctx, `M${x} ${GROUND - 5} Q${x + 2} ${stalk + 40} ${x - 3} ${stalk}`, '#39473c', 2.5);
+    for (let j = 0; j < 4; j += 1) {
+      const y = stalk + j * 16;
+      const reach = 10 + j * 2;
+      for (const sign of [-1, 1]) {
+        line(ctx, `M${x} ${y + 13} Q${x + reach * sign} ${y - 1} ${x + (reach + 4) * sign} ${y - 3}`, '#3a483c', 2);
+        for (let k = 0; k < 3; k += 1) {
+          const xx = x + (reach * 0.45 + k * 3) * sign;
+          ellipse(ctx, xx, y + 2 - k * 3, 3.3, 5.2, k % 2 ? '#40513f' : '#455440', -sign * 0.55);
+        }
+      }
+    }
+    shape(ctx, `M${x - 7} ${GROUND - 4} Q${x} ${GROUND - 15} ${x + 7} ${GROUND - 4} L${x + 5} ${GROUND} L${x - 6} ${GROUND}Z`, '#bf8059');
+    line(ctx, `M${x - 3} ${GROUND - 6} l7 1`, '#dea07766', 1);
+  }
+  burrowEars(ctx, 953, GROUND - 19, paper);
+  burrowEars(ctx, 988, GROUND - 18, paper, true);
+  ellipse(ctx, 318, GROUND - 9, 17, 11, '#26353a');
+}
+
 function background(scene, paper, options = {}) {
   const id = SCENES[scene]?.id || 'piedra';
   const geometry = SCENE_GEOMETRY[scene] || {};
   const ending = options.ending;
   const title = options.title;
+  const night = ending || id === 'madriguera' || title;
   const plateau = id === 'zanahoria' || id === 'conejo';
   const skyCanvas = surface();
   const skyCtx = skyCanvas.getContext('2d');
+  if (night) {
+    nightSky(skyCtx, paper, ending);
+    const world = surface();
+    nightGround(world.getContext('2d'), paper, ending);
+    return { sky: skyCanvas, world, top: 0, left: 0 };
+  }
   const sky = skyCtx.createLinearGradient(0, 0, 0, GROUND + 10);
-  if (ending) {
+  if (ending || options.dusk) {
     sky.addColorStop(0, '#28383c');
     sky.addColorStop(0.38, '#454248');
     sky.addColorStop(0.8, '#a74d5e');
@@ -763,15 +891,15 @@ function background(scene, paper, options = {}) {
   }
   skyCtx.fillStyle = sky;
   skyCtx.fillRect(0, 0, WIDTH, HEIGHT);
-  if (id === 'piedra' || ending || plateau) {
-    const sunX = ending ? 508 : title ? 994 : plateau ? 300 : 321;
-    const sunY = ending ? 610 : plateau ? 260 : 311;
-    const radius = ending ? 218 : title ? 117 : plateau ? 46 : 113;
+  if (!options.hideSun && (id === 'piedra' || plateau)) {
+    const sunX = options.dusk ? 508 : plateau ? 300 : 321;
+    const sunY = options.dusk ? 610 : plateau ? 260 : 311;
+    const radius = options.dusk ? 218 : plateau ? 46 : 113;
     const disc = new Path2D();
     disc.ellipse(sunX, sunY, radius * 0.97, radius, -0.04, 0, Math.PI * 2);
     paint(skyCtx, disc, CORAL, [sunX - radius, sunY - radius, radius * 2, radius * 2], paper, 12, 1.2);
   }
-  if (ending) {
+  if (ending || options.dusk) {
     cloud(skyCtx, 240, 144, 233, 39, paper, '#a4bdc0');
     cloud(skyCtx, 1060, 99, 116, 21, paper, '#adc4c5');
   } else if (!plateau && id !== 'pared' && id !== 'serpiente') {
@@ -784,12 +912,18 @@ function background(scene, paper, options = {}) {
   skyCtx.fillStyle = paper;
   skyCtx.fillRect(0, 0, WIDTH, HEIGHT);
   skyCtx.restore();
-  const width = geometry.width || WIDTH;
-  const top = id === 'pared' ? -1300 : id === 'serpiente' ? -340 : 0;
-  const world = surface(width, HEIGHT - top);
+  const panoramic = id === 'serpiente';
+  const width = panoramic ? WIDTH * 3 : geometry.width || WIDTH;
+  const left = panoramic ? -WIDTH : 0;
+  const top = id === 'pared' || panoramic ? -1300 : 0;
+  const bottom = panoramic ? 1100 : HEIGHT;
+  const world = surface(width, bottom - top);
   const ctx = world.getContext('2d');
-  ctx.translate(0, -top);
-  ground(ctx, scene, paper, { ending, plateau, width });
+  ctx.translate(-left, -top);
+  ctx.save();
+  ctx.translate(left, 0);
+  ground(ctx, scene, paper, { ending: ending || options.dusk, plateau, width, bottom });
+  ctx.restore();
   if (['piedra', 'tortuga', 'elefante'].includes(id)) {
     const r = geometry.rock;
     rock(ctx, r.x, r.width, r.top, paper, 21 + scene);
@@ -799,24 +933,31 @@ function background(scene, paper, options = {}) {
   if (['charco', 'jirafa', 'cocodrilo'].includes(id)) water(ctx, geometry.gap.left, geometry.gap.right, paper, id === 'charco' ? 'puddle' : 'river');
   if (id === 'juncos') reeds(ctx, paper, false, geometry.reeds);
   if (id === 'pared' || id === 'serpiente') {
-    cliff(ctx, paper, geometry.wall.x, geometry.wall.top);
-    if (id === 'serpiente') snakeTree(ctx, paper);
+    cliff(ctx, paper, geometry.wall.x, geometry.wall.top, bottom, panoramic ? WIDTH * 2 : WIDTH);
+    if (panoramic) {
+      snakeTree(ctx, paper, geometry.tree.y);
+      // Los juncos quedan lejos, a la izquierda del mismo macizo.
+      ctx.save();
+      ctx.translate(-1650, 0);
+      reeds(ctx, paper, false, { left: 380, right: 920 });
+      ctx.restore();
+    }
   }
-  if (plateau && !ending) loneCarrot(ctx, paper, id === 'zanahoria');
+  if (plateau && !ending) loneCarrot(ctx, paper, Boolean(options.planted));
   if (ending) garden(ctx, paper, true);
   const plants = id === 'pared' || id === 'serpiente' ? [[83, 0.6], [830, 0.4]] : id === 'piedra' ? [[457, 0.65], [921, 0.48], [1173, 0.36]] : id === 'juncos' ? [[83, 0.6], [2256, 0.48], [2430, 0.25]] : plateau ? [] : [[83, 0.6], [1055, 0.48], [1154, 0.25]];
   for (const [x, size] of plants) grass(ctx, x, GROUND, size, ending ? '#5f6b4f' : '#73774e');
   ctx.save();
   ctx.globalAlpha = 0.32;
   ctx.fillStyle = paper;
-  ctx.fillRect(0, top, width, HEIGHT - top);
+  ctx.fillRect(left, top, width, bottom - top);
   ctx.restore();
   let foreground;
   if (id === 'juncos') {
     foreground = surface(width, HEIGHT);
     reeds(foreground.getContext('2d'), paper, true, geometry.reeds);
   }
-  return { sky: skyCanvas, world, top, foreground };
+  return { sky: skyCanvas, world, top, left, foreground };
 }
 
 function drawMap(ctx, state, paper) {
@@ -847,10 +988,14 @@ function drawMap(ctx, state, paper) {
     draw();
     ctx.restore();
   };
-  // Los doce hitos comparten un paisaje; cada ilustración cae bajo su rótulo.
+  // Todos los hitos comparten un paisaje; cada ilustración cae bajo su rótulo.
   for (let index = 0; index < SCENES.length; index += 1) {
     const x = centers[index];
     const id = SCENES[index].id;
+    if (id === 'madriguera') mini(x, 551, 0.65, () => {
+      burrowEars(ctx, 0, 0, paper);
+      shape(ctx, 'M-36 6 Q0 -5 36 6Z', '#504f3c');
+    });
     if (id === 'piedra') mini(x, 551, 0.26, () => {
       rock(ctx, -45, 90, -70, paper, 20, 0);
       bird(ctx, 74, 0, paper);
@@ -980,9 +1125,11 @@ export function createRenderer(canvas) {
     const id = SCENES[scene].id;
     const time = reducedMotion ? 0 : state.time || 0;
     const ending = state.mode === 'ending';
+    const title = state.mode === 'title';
+    const night = ending || title || id === 'madriguera';
     const plateau = id === 'zanahoria' || id === 'conejo';
     if (skyExtension > 0) {
-      ctx.fillStyle = map ? '#263c43' : ending ? '#28383c' : id === 'piedra' ? '#accfd1' : plateau ? '#b5c7b7' : '#9ec7cd';
+      ctx.fillStyle = map ? '#263c43' : night ? '#202530' : id === 'piedra' ? '#accfd1' : plateau ? '#b5c7b7' : '#9ec7cd';
       ctx.fillRect(0, 0, WIDTH, skyExtension + 1);
       ctx.save();
       ctx.globalAlpha = 0.32;
@@ -1001,13 +1148,63 @@ export function createRenderer(canvas) {
       ctx.drawImage(mapCache.bitmap, 0, 0);
       return;
     }
-    const key = `${id}:${ending}:${state.mode === 'title'}`;
-    if (!scenes.has(key)) scenes.set(key, background(scene, paper, { ending, title: state.mode === 'title' }));
+    const planted = id === 'zanahoria' && !state.carrotTaken;
+    const key = `${id}:${ending}:${title}:${planted}`;
+    if (!scenes.has(key)) scenes.set(key, background(scene, paper, { ending, title, planted, hideSun: id === 'conejo' }));
     const layer = scenes.get(key);
     ctx.drawImage(layer.sky, 0, 0);
+    let duskLayer;
+    const duskProgress = id === 'conejo' && !ending ? ease(clamp((state.sceneTime || 0) / 0.65, 0, 1)) : 0;
+    if (duskProgress > 0) {
+      const duskKey = 'companion-dusk';
+      if (!scenes.has(duskKey)) scenes.set(duskKey, background(scene, paper, { dusk: true, hideSun: true }));
+      duskLayer = scenes.get(duskKey);
+      ctx.save();
+      ctx.globalAlpha = duskProgress;
+      ctx.drawImage(duskLayer.sky, 0, 0);
+      if (skyExtension > 0) ctx.drawImage(duskLayer.sky, 0, 0, WIDTH, 1, 0, -skyExtension, WIDTH, skyExtension);
+      ctx.restore();
+    }
+    if (id === 'conejo' && !ending) {
+      // Un único sol desciende y crece al pasar del encuentro al atardecer.
+      const x = mix(300, 508, duskProgress);
+      const y = mix(260, 610, duskProgress);
+      const radius = mix(46, 218, duskProgress);
+      const disc = new Path2D();
+      disc.ellipse(x, y, radius * 0.97, radius, -0.04, 0, Math.PI * 2);
+      paint(ctx, disc, CORAL, [x - radius, y - radius, radius * 2, radius * 2], paper, 12, 1.2);
+    }
     ctx.save();
+    const zoom = ending ? 1 : state.cameraZoom || 1;
+    ctx.scale(zoom, zoom);
     ctx.translate(ending ? 0 : -(state.cameraX || 0), ending ? 0 : -(state.cameraY || 0));
-    ctx.drawImage(layer.world, 0, layer.top);
+    ctx.drawImage(layer.world, layer.left || 0, layer.top);
+    if (duskLayer) {
+      ctx.save();
+      ctx.globalAlpha = duskProgress;
+      ctx.drawImage(duskLayer.world, 0, duskLayer.top);
+      ctx.restore();
+    }
+    if (night) {
+      if (!ending) {
+        const progress = title ? 0 : state.emergeProgress || 0;
+        if (progress === 0) burrowEars(ctx, title ? 170 : state.x, GROUND - 20, paper);
+        else {
+          ctx.save();
+          ctx.beginPath();
+          ctx.rect(0, 0, WIDTH, GROUND);
+          ctx.clip();
+          rabbit(ctx, state.x, state.y + 43 * (1 - ease(progress)), paper, {
+            facing: state.facing || 1, time,
+            moving: progress < 1 || reducedMotion ? 0 : state.vx,
+            airborne: progress >= 1 && !state.grounded,
+          });
+          ctx.restore();
+        }
+      }
+      ctx.restore();
+      return;
+    }
     if (!ending && id === 'tortuga') {
       const p = ease(clamp(state.helpProgress || 0, 0, 1));
       const tx = state.helped ? clamp(state.x, 450, 650) : 515;
@@ -1018,23 +1215,25 @@ export function createRenderer(canvas) {
       ctx.restore();
     }
     if (!ending && id === 'zorro') {
-      if (state.helped) {
-        ctx.save();
-        ctx.translate(568, 393);
-        ctx.rotate(Math.PI - 0.13);
-        fox(ctx, 0, 0, paper, true);
-        ctx.restore();
-        line(ctx, 'M595 387 Q633 350 623 307', '#562e2d', 8);
-      } else fox(ctx, 725, 306, paper, false);
+      if (state.helped) fox(ctx, 548, GROUND, paper, true);
+      else fox(ctx, 725, 306, paper, false);
     }
     if (!ending && id === 'elefante') elephant(ctx, 569, GROUND, paper, state);
     if (!ending && id === 'jirafa') giraffe(ctx, paper, state.helpProgress || 0);
     if (!ending && id === 'cocodrilo') crocodile(ctx, paper, state.helpProgress || 0, time);
     if (!ending && id === 'serpiente') snake(ctx, paper, state);
-    if (ending || id === 'conejo') {
-      const friendX = ending ? 956 : state.friendGreeted ? Math.min(1185, (state.x || 100) + 85) : 930;
-      rabbit(ctx, friendX, GROUND, paper, { brown: true, facing: ending || state.friendGreeted ? 1 : -1, time, moving: state.friendGreeted && !reducedMotion ? state.vx : 0 });
-      if (!ending) carrot(ctx, friendX - 30, GROUND - 37, paper, -1.2, true);
+    if (id === 'conejo' || id === 'zanahoria' && state.carrotPhase !== 'planted') {
+      const friendX = state.friendX ?? 1340;
+      const facing = state.friendFacing || -1;
+      const running = ['approaching', 'retreating'].includes(state.carrotPhase);
+      const picking = state.carrotPhase === 'plucking';
+      const hop = running && !reducedMotion ? Math.abs(Math.sin(time * 13)) * 13 : 0;
+      rabbit(ctx, friendX, GROUND - hop, paper, {
+        brown: true, facing, time, ducking: picking,
+        moving: reducedMotion ? 0 : running ? 250 : state.friendGreeted ? state.vx : 0,
+      });
+      // La raíz desaparece de la tierra exactamente al pasar a sus patas.
+      if (state.carrotTaken) carrot(ctx, friendX + facing * 28, GROUND - 37 - hop, paper, facing * 1.2, true);
     }
     if (!state.hiddenInReeds && state.grounded && Math.abs(state.vx || 0) > 30 && !reducedMotion) {
       ctx.save();

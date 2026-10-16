@@ -7,7 +7,7 @@ en vídeo.
 
 **[Jugar en el navegador](https://aivm23.github.io/me-ayudas-juego/)**
 
-Doce pantallas conectadas, ilustración original mediante Canvas 2D y un mapa
+Trece pantallas conectadas, ilustración original mediante Canvas 2D y un mapa
 panorámico del camino. Sin sonido, cuentas, analítica ni conexiones externas
 durante el juego. HTML, CSS y JavaScript nativos, sin framework ni compilación.
 
@@ -21,7 +21,9 @@ durante el juego. HTML, CSS y JavaScript nativos, sin framework ni compilación.
 | ↓ + ← / → | Recorrer agachado el túnel del zorro |
 | Esc | Pausar o continuar; cerrar el mapa |
 
-El cuento empieza también con la barra espaciadora. En móvil hay controles
+El cuento empieza también con la barra espaciadora. Una guarda nocturna
+muestra las orejas del conejo: con espacio o → sale de su madriguera y
+comienza el camino. En móvil hay controles
 táctiles que permiten mantener pulsada una dirección mientras se salta.
 Los botones superiores abren el mapa y la pausa; desde la pausa se puede
 volver al principio. No hay vidas ni límite de tiempo. Si caes al agua,
@@ -32,9 +34,11 @@ de espaldas: el primer espacio lo hace girar y el segundo pide su ayuda.
 La jirafa espera al otro lado del río y acerca el cuello hasta tu orilla.
 Los juncos se atraviesan caminando: el conejo desaparece entre ellos y puedes
 seguir con → o retroceder con ← hasta reaparecer. Ante la pared, espacio
-permite mirar arriba; la serpiente baja desde su rama y te eleva a la meseta.
-Después encontrarás una zanahoria solitaria y, en la siguiente pantalla, al
-conejo marrón. Salúdalo y sigue caminando con él hasta el huerto.
+abre suavemente el encuadre hasta mostrar toda la montaña y el conejo
+pequeño en su base. La serpiente baja desde su rama y te eleva a la meseta.
+Al acercarte a una zanahoria solitaria, aparece el conejo marrón, la arranca
+y se la lleva. Acércate a él y seguid caminando juntos al atardecer. El cuento
+se cierra en un huerto nocturno: solo asoman las cuatro orejas de los amigos.
 
 ## Ejecutar
 
@@ -60,13 +64,15 @@ pnpm verify
 - `pnpm check`: sintaxis de JavaScript e integridad de los recursos del juego.
 - `pnpm test`: física, colisiones, ayudas, progresión, reintentos y seguridad
   del servidor estático, con el ejecutor de pruebas de Node.
-- `pnpm test:e2e`: teclado, las doce pantallas y sus pasos intermedios, pausa,
+- `pnpm test:e2e`: teclado, las trece pantallas y sus pasos intermedios, pausa,
   mapa, reinicio y móvil, con navegadores reales y perfiles temporales aislados.
 
 Playwright comprueba la interfaz en Chromium, Firefox y WebKit y ejecuta el
 recorrido completo con controles reales en Chromium. Cubre el giro del
 elefante, el descenso por el túnel, la marcha y el retorno entre los juncos,
-la pared previa, el ascenso de la serpiente y el encuentro antes del huerto.
+la salida de la madriguera, la pared previa, el zoom que revela la montaña,
+el ascenso de la serpiente y la entrada, recogida y retirada del conejo marrón
+antes de la marcha conjunta hacia el huerto.
 La fidelidad de las ilustraciones se revisa con capturas del juego y los
 fotogramas originales; los atributos de estado prueban las reglas y la
 progresión. Los fallos conservan trazas y capturas en directorios ignorados
@@ -96,7 +102,7 @@ dependencias de desarrollo. No hay dependencias de ejecución.
 index.html            Interfaz accesible
 styles.css            Tipografía, libro y controles adaptables
 src/app.js            Teclado, táctil, pausa y presentación
-src/engine.js         Física y doce etapas, independiente del DOM
+src/engine.js         Física y trece etapas, independiente del DOM
 src/art.js            Paisaje, animales, cámaras y panorama en Canvas 2D
 assets/               Tipografías libres y favicon
 tests/                Pruebas del motor y del navegador

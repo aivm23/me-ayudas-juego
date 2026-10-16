@@ -229,6 +229,14 @@ button svg {
   opacity:.85
 }
 
+.spread.is-night .intro {
+  color:#f6eee6
+}
+
+.spread.is-night .intro h1 {
+  color:#f36b79
+}
+
 .scene-label {
   position:absolute;
   left:4%;
@@ -432,7 +440,7 @@ kbd {
   bottom:5%;
   list-style:none;
   display:grid;
-  grid-template-columns:repeat(var(--scene-count,12),1fr);
+  grid-template-columns:repeat(var(--scene-count,13),1fr);
   padding:0;
   gap:7px;
   margin:0;
@@ -944,7 +952,7 @@ dialog>div {
     left:0;
     right:0;
     bottom:-104px;
-    grid-template-columns:repeat(6,1fr);
+    grid-template-columns:repeat(7,1fr);
     gap:10px 4px;
     color:var(--ink);
   }

@@ -218,9 +218,9 @@ function updateUI(force = false) {
     $('[data-testid="scene-title"]').textContent = scene.title;
     $('#chapter-number').textContent = `Un paso más · ${state.scene + 1} de ${SCENES.length}`;
     $('#page-number').textContent = state.mode === 'title' ? 'Un paso, una historia' : state.mode === 'ending' ? 'Fin… y un nuevo comienzo' : `${state.scene + 1} / ${SCENES.length}`;
-    $('.spread').classList.toggle('is-night', mapOpen || state.mode === 'ending');
+    $('.spread').classList.toggle('is-night', mapOpen || state.mode === 'title' || state.mode === 'ending' || scene.id === 'madriguera' || scene.id === 'conejo');
     $('.spread').classList.toggle('is-map', mapOpen);
-    canvas.setAttribute('aria-label', mapOpen ? 'Mapa panorámico del recorrido completo: piedras, animales, ríos, juncos, pared y huerto.' : state.mode === 'ending' ? 'Los dos conejos juntos en un huerto de zanahorias al atardecer.' : `${scene.title}. ${scene.description}`);
+    canvas.setAttribute('aria-label', mapOpen ? 'Mapa panorámico del recorrido completo: madriguera, piedras, animales, ríos, juncos, montaña y huerto.' : state.mode === 'title' ? 'Una noche estrellada. Las orejas de un conejo blanco asoman en una madriguera bajo la luna.' : state.mode === 'ending' ? 'Huerto de zanahorias bajo un cielo nocturno. Las cuatro orejas de los dos amigos asoman juntas en una madriguera.' : `${scene.title}. ${scene.description}`);
     $('#map-description').textContent = state.completed.length === SCENES.length ? '¡Lo recorrimos entero! Gracias por acompañarnos.' : `Hemos recorrido ${state.completed.length} de ${SCENES.length} tramos. Cada amigo nos ayuda a seguir.`;
     $('#map-legend').style.setProperty('--scene-count', SCENES.length);
     $('#map-legend').replaceChildren(...SCENES.map((item, index) => {
@@ -242,13 +242,14 @@ function updateUI(force = false) {
     lastHint = hint;
   }
   const storyLines = {
+    madriguera: state.emergeProgress === 1 ? '¡Vamos!' : '',
     piedra: '¡Vamos!', tortuga: '¿Me ayudas, tortuga?',
     zorro: '¿Hay un camino por debajo?',
     elefante: state.elephantRevealed ? '¡Hola, elefante!' : '¡Qué dos rocas tan grandes!',
     charco: '¡Un charco!', jirafa: '¡Holaaaaa!', cocodrilo: 'Zzz…',
     juncos: '', pared: '¿Y ahora…?',
     serpiente: state.snakePhase === 'lowering' ? '¿Me ayudas?' : '¡Hola, serpiente! ¿Puedes oírme?',
-    zanahoria: '¡Una zanahoria!', conejo: state.friendGreeted ? '¡Vamos juntos!' : '¡Hola!',
+    zanahoria: state.carrotTaken ? '¡Eh! ¡La zanahoria!' : '¡Una zanahoria!', conejo: '¡Sígueme, que te ayudo!',
   };
   const nearby = state.x > 340 && state.x < 790;
   const helping = state.helped && state.snakePhase !== 'lowering';
@@ -271,6 +272,12 @@ function updateUI(force = false) {
   debug.dataset.friendGreeted = String(Boolean(state.friendGreeted));
   debug.dataset.cameraX = String(Math.round(state.cameraX || 0));
   debug.dataset.cameraY = String(Math.round(state.cameraY || 0));
+  debug.dataset.cameraZoom = String(state.cameraZoom ?? 1);
+  debug.dataset.revealCameraProgress = String(state.revealCameraProgress ?? 0);
+  debug.dataset.carrotPhase = state.carrotPhase || 'planted';
+  debug.dataset.carrotTaken = String(Boolean(state.carrotTaken));
+  debug.dataset.friendX = String(Math.round(state.friendX ?? 1340));
+  debug.dataset.emergeProgress = String(state.emergeProgress || 0);
 }
 
 function frame(timestamp) {

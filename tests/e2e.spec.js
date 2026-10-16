@@ -12,6 +12,7 @@ async function start(page, keyboard = true, focusButton = false) {
   if (keyboard) await page.keyboard.press('Space');
   else await page.getByRole('button', { name: 'Empezar el cuento', exact: true }).click();
   await expect(state(page)).toHaveAttribute('data-mode', 'playing');
+  await expect(state(page)).toHaveAttribute('data-scene-id', 'madriguera');
 }
 
 async function walkTo(page, target, { down = false, timeout = 8_000 } = {}) {
@@ -63,6 +64,10 @@ test('teclado, salto, pausa, mapa y reinicio accesible', async ({ page }) => {
   const errors = [];
   page.on('pageerror', (error) => errors.push(error.message));
   await start(page, true, true);
+  const burrowX = await number(page, 'x');
+  await page.keyboard.press('Space');
+  await expect.poll(() => number(page, 'emerge-progress')).toBe(1);
+  await leaveScene(page, 'piedra');
   await expect(page.getByTestId('scene-title')).not.toBeEmpty();
   await expect(page.getByTestId('hint')).not.toBeEmpty();
   const initialX = await number(page, 'x');
@@ -88,7 +93,7 @@ test('teclado, salto, pausa, mapa y reinicio accesible', async ({ page }) => {
 
   await page.getByRole('button', { name: 'Ver el mapa', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Cerrar el mapa', exact: true })).toBeVisible();
-  await expect(page.locator('#map-legend li')).toHaveCount(12);
+  await expect(page.locator('#map-legend li')).toHaveCount(13);
   const mapX = await number(page, 'x');
   await page.keyboard.down('ArrowRight');
   await page.waitForTimeout(200);
@@ -103,8 +108,10 @@ test('teclado, salto, pausa, mapa y reinicio accesible', async ({ page }) => {
   await page.getByRole('button', { name: 'Volver al principio', exact: true }).click();
   await page.getByRole('button', { name: 'Empezar de nuevo', exact: true }).click();
   await expect(state(page)).toHaveAttribute('data-scene', '0');
+  await expect(state(page)).toHaveAttribute('data-scene-id', 'madriguera');
   await expect(state(page)).toHaveAttribute('data-mode', 'playing');
-  expect(await number(page, 'x')).toBeLessThanOrEqual(120);
+  expect(await number(page, 'x')).toBe(burrowX);
+  expect(await number(page, 'emerge-progress')).toBe(0);
   expect(errors).toEqual([]);
 });
 
@@ -136,12 +143,18 @@ test('pantalla móvil: lienzo ajustado, controles visibles y ningún desbordamie
   await page.getByRole('button', { name: 'Cerrar el mapa', exact: true }).click();
 });
 
-test('recorre las doce escenas y sus pasos intermedios con controles reales', async ({ page, browserName }) => {
+test('recorre las trece escenas y sus pasos intermedios con controles reales', async ({ page, browserName }) => {
   test.skip(browserName !== 'chromium', 'El recorrido completo se prueba en Chromium; los tres motores cubren la interfaz.');
   test.setTimeout(180_000);
   const errors = [];
   page.on('pageerror', (error) => errors.push(error.message));
   await start(page);
+  // La guarda inicial muestra las orejas; el conejo sale antes de caminar.
+  expect(await number(page, 'emerge-progress')).toBe(0);
+  await page.keyboard.press('Space');
+  await expect.poll(() => number(page, 'emerge-progress')).toBeGreaterThan(0);
+  await expect.poll(() => number(page, 'emerge-progress')).toBe(1);
+  await leaveScene(page, 'piedra');
   // Piedra: la primera prueba enseña a saltar sin ayuda.
   await walkTo(page, 520);
   await jumpTo(page, 750);
@@ -205,34 +218,65 @@ test('recorre las doce escenas y sus pasos intermedios con controles reales', as
   await expect(state(page)).toHaveAttribute('data-helped', 'false');
   await walkTo(page, 740);
   await expect(state(page)).toHaveAttribute('data-scene-id', 'pared');
+  let previousWallX = null;
+  await expect.poll(async () => {
+    const x = await number(page, 'x');
+    const stopped = x === previousWallX;
+    previousWallX = x;
+    return stopped;
+  }, { intervals: [150] }).toBe(true);
+  const wallX = await number(page, 'x');
+  const wallY = await number(page, 'y');
   await page.keyboard.press('Space');
   await expect(state(page)).toHaveAttribute('data-scene-id', 'serpiente');
   await expect(state(page)).toHaveAttribute('data-snake-phase', 'coiled');
-  // Una pulsación baja la cabeza y después inicia el ascenso con cámara.
-  await walkTo(page, 550);
+  expect(await number(page, 'x')).toBe(wallX);
+  expect(await number(page, 'y')).toBe(wallY);
+  // El zoom revela el macizo completo, sin teletransportar al conejo.
+  await expect.poll(() => number(page, 'reveal-camera-progress')).toBeGreaterThan(0);
+  await page.keyboard.press('Space');
+  await expect(state(page)).toHaveAttribute('data-helped', 'false');
+  await expect.poll(() => number(page, 'reveal-camera-progress')).toBe(1);
+  expect(await number(page, 'camera-zoom')).toBeCloseTo(0.5, 2);
+  expect(await number(page, 'camera-x')).toBe(-1000);
+  expect(await number(page, 'camera-y')).toBe(-650);
+  // Una pulsación baja la cabeza y después inicia el ascenso.
   await page.keyboard.press('Space');
   await expect(state(page)).toHaveAttribute('data-snake-phase', 'lowering');
   await expect(state(page)).toHaveAttribute('data-snake-phase', 'lifting');
-  await expect.poll(() => number(page, 'camera-y')).toBeLessThan(-100);
-  await waitForGround(page, -220);
+  await waitForGround(page, -600);
   await expect(state(page)).toHaveAttribute('data-snake-phase', 'resting');
   await leaveScene(page, 'zanahoria');
-  // La zanahoria solitaria precede al encuentro con el conejo marrón.
+  // El marrón entra al acercarnos, arranca la planta y se la lleva.
   await expect(state(page)).toHaveAttribute('data-friend-greeted', 'false');
-  await walkTo(page, 960);
   await expect(state(page)).toHaveAttribute('data-scene-id', 'zanahoria');
-  await leaveScene(page, 'conejo');
+  await expect(state(page)).toHaveAttribute('data-carrot-phase', 'planted');
+  await expect(state(page)).toHaveAttribute('data-carrot-taken', 'false');
+  await walkTo(page, 660);
+  await expect(state(page)).toHaveAttribute('data-carrot-phase', 'approaching');
+  expect(await number(page, 'friend-x')).toBeGreaterThan(900);
+  await expect.poll(() => state(page).getAttribute('data-carrot-phase'), { intervals: [20, 30, 50] }).toBe('plucking');
+  await expect(state(page)).toHaveAttribute('data-carrot-taken', 'false');
+  await expect.poll(() => state(page).getAttribute('data-carrot-phase'), { intervals: [20, 30, 50] }).toBe('retreating');
+  await expect(state(page)).toHaveAttribute('data-carrot-taken', 'true');
+  await expect(state(page)).toHaveAttribute('data-carrot-phase', 'waiting');
+  expect(await number(page, 'friend-x')).toBe(1080);
+  await expect(state(page)).toHaveAttribute('data-scene-id', 'zanahoria');
   await expect(state(page)).toHaveAttribute('data-friend-greeted', 'false');
-  await walkTo(page, 930);
-  await page.keyboard.press('Space');
+  // Llegar junto al amigo continúa en el mismo lugar, sin otra pulsación.
+  await walkTo(page, 1000);
+  await expect(state(page)).toHaveAttribute('data-scene-id', 'conejo');
   await expect(state(page)).toHaveAttribute('data-friend-greeted', 'true');
+  await expect(state(page)).toHaveAttribute('data-carrot-phase', 'together');
+  expect(await number(page, 'x')).toBeGreaterThanOrEqual(990);
   await expect(state(page)).toHaveAttribute('data-mode', 'playing');
-  // Saludar no termina el juego: los dos deben continuar hasta el huerto.
+  // Los dos caminan al atardecer antes de la guarda nocturna del huerto.
   await walkTo(page, 1260);
   await expect(state(page)).toHaveAttribute('data-mode', 'ending');
-  await expect(page.getByRole('heading', { name: '¡Un nuevo amigo!', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: '¡Gracias!', exact: true })).toBeVisible();
+  await expect(page.locator('#game-canvas')).toHaveAttribute('aria-label', /cuatro orejas/);
   await page.getByRole('button', { name: 'Ver nuestro camino', exact: true }).click();
-  await expect(page.locator('#map-legend li.visited')).toHaveCount(12);
+  await expect(page.locator('#map-legend li.visited')).toHaveCount(13);
   await expect(page.locator('#map-description')).toContainText('entero');
   expect(errors).toEqual([]);
 });
