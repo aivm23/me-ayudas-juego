@@ -1,7 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  WIDTH, HEIGHT, GROUND, SCENES, SCENE_GEOMETRY,
+  WIDTH, HEIGHT, GROUND, RADIUS, SCENES, SCENE_GEOMETRY, SCENE_IDS,
+  ELEPHANT_REVEAL_DURATION, SNAKE_HELP_DURATION, SNAKE_LOWERING_PROGRESS,
+  sceneId, sceneWidth, currentGeometry, tunnelFloorAt,
   createGame, startGame, restartGame, updateGame, getHint,
 } from '../src/engine.js';
 
@@ -40,13 +42,13 @@ function leave(state) {
 // Routes use the very same sustained directions and one-frame key pulses as
 // the browser. No coordinates, progress flags or challenge state are changed.
 function solveCurrent(state) {
-  switch (state.scene) {
-    case 0:
+  switch (sceneId(state)) {
+    case 'piedra':
       go(state, 520);
       pulse(state, 'action', RIGHT);
       go(state, 800);
       break;
-    case 1:
+    case 'tortuga':
       go(state, 490);
       pulse(state);
       tick(state, {}, 1.2);
@@ -54,38 +56,47 @@ function solveCurrent(state) {
       pulse(state, 'up', RIGHT);
       go(state, 900);
       break;
-    case 2:
+    case 'zorro':
       go(state, 465);
       pulse(state);
-      go(state, 900, { right: true, down: true });
+      go(state, 1000, { right: true, down: true });
       break;
-    case 3:
+    case 'elefante':
       go(state, 480);
+      pulse(state);
+      tick(state, {}, 0.7);
       pulse(state);
       tick(state, {}, 1.2);
       go(state, 940);
       break;
-    case 4:
+    case 'charco':
       go(state, 510);
       pulse(state, 'action', RIGHT);
       go(state, 810);
       break;
-    case 5:
-    case 6:
+    case 'jirafa':
+    case 'cocodrilo':
       go(state, 450);
       pulse(state);
       go(state, 990);
       break;
-    case 7:
-      go(state, 1000, { right: true, down: true });
+    case 'juncos':
+      go(state, 2240);
       break;
-    case 8:
+    case 'pared':
+      go(state, 750);
+      pulse(state);
+      break;
+    case 'serpiente':
       go(state, 535);
       pulse(state);
-      tick(state, {}, 1.2);
+      tick(state, {}, 3.2);
       go(state, 1050);
       break;
-    case 9:
+    case 'zanahoria':
+      go(state, 1000);
+      break;
+    case 'conejo':
       go(state, 910);
       pulse(state);
       break;
@@ -95,11 +106,18 @@ function solveCurrent(state) {
 }
 
 function reachScene(scene) {
+  const destination = typeof scene === 'string' ? SCENE_IDS[scene] : scene;
   const state = playing();
-  while (state.scene < scene) {
+  while (state.scene < destination) {
+    const previous = state.scene;
     solveCurrent(state);
-    assert.equal(state.solved, true);
-    leave(state);
+    if (state.scene === previous) {
+      assert.equal(state.solved, true, `${sceneId(state)} debe estar resuelta antes de salir`);
+      leave(state);
+    } else {
+      assert.equal(state.scene, previous + 1, 'Mirar la pared descubre la siguiente pantalla');
+      assert.ok(state.completed.includes('pared'));
+    }
   }
   return state;
 }
@@ -118,10 +136,13 @@ test('el título es inerte y el comienzo inicializa el recorrido', () => {
   assert.match(getHint(state), /piedra/);
 });
 
-test('las diez escenas y su geometría siguen el cuento completo', () => {
-  assert.deepEqual(SCENES.map(scene => scene.id), ['piedra', 'tortuga', 'zorro', 'elefante', 'charco', 'jirafa', 'cocodrilo', 'juncos', 'serpiente', 'huerto']);
-  assert.equal(SCENE_GEOMETRY.length, 10);
-  assert.equal(SCENE_GEOMETRY[8].wall.top, 300);
+test('las doce escenas separan pared, serpiente, zanahoria y encuentro antes del huerto final', () => {
+  assert.deepEqual(SCENES.map(scene => scene.id), ['piedra', 'tortuga', 'zorro', 'elefante', 'charco', 'jirafa', 'cocodrilo', 'juncos', 'pared', 'serpiente', 'zanahoria', 'conejo']);
+  assert.equal(SCENE_GEOMETRY.length, SCENES.length);
+  assert.ok(SCENES.every(scene => typeof scene.mapLabel === 'string' && scene.mapLabel.length > 0));
+  assert.equal(SCENE_GEOMETRY[SCENE_IDS.pared].wall.top, -1200);
+  assert.equal(SCENE_GEOMETRY[SCENE_IDS.serpiente].wall.top, -220);
+  assert.equal(SCENES.some(scene => scene.id === 'huerto'), false);
   assert.equal(WIDTH, 1280);
   assert.equal(HEIGHT, 720);
 });
@@ -236,31 +257,79 @@ test('la tortuga exige cercanía y ayuda, y luego un salto desde su caparazón',
 });
 
 test('el zorro debe abrir el túnel antes de poder pasar agachado', () => {
-  const state = reachScene(2);
+  const state = reachScene('zorro');
   tick(state, { right: true, down: true }, 4);
-  assert.equal(state.x, 596);
+  assert.equal(state.x, currentGeometry(state).tunnel.x - RADIUS);
   assert.equal(state.solved, false);
   until(state, current => current.x <= 470, { left: true });
   pulse(state);
   assert.equal(state.helped, true);
   tick(state, RIGHT, 2);
-  assert.equal(state.x, 596);
+  assert.equal(state.x, currentGeometry(state).tunnel.x - RADIUS);
   go(state, 700, { right: true, down: true });
   const insideX = state.x;
+  const insideY = state.y;
+  assert.ok(insideY > GROUND + 95, 'El conejo desciende realmente bajo el suelo');
+  assert.equal(insideY, tunnelFloorAt(insideX, currentGeometry(state).tunnel));
   tick(state, RIGHT, 1);
   assert.equal(state.x, insideX, 'Soltar abajo detiene la marcha bajo el techo');
+  assert.equal(state.y, insideY, 'Sigue apoyado en el túnel al detenerse');
   assert.equal(state.ducking, true, 'El conejo no atraviesa el techo al levantarse');
-  go(state, 900, { right: true, down: true });
+  until(state, current => current.x <= 450, { left: true, down: true });
+  tick(state, {}, 0.2);
+  assert.equal(state.y, GROUND);
+  assert.equal(state.ducking, false);
+  assert.equal(state.solved, false, 'Volver por la entrada no cuenta como atravesar el túnel');
+  go(state, 1000, { right: true, down: true });
   tick(state, {}, 0.2);
   assert.equal(state.solved, true);
   assert.equal(state.ducking, false);
+  assert.equal(state.y, GROUND);
+  assert.equal(state.grounded, true);
 });
 
-test('el elefante sube sin teletransportar horizontalmente y deja avanzar sobre la roca', () => {
-  const state = reachScene(3);
+test('el túnel tiene perfil U continuo y la roca impide saltar sin cruzarlo', () => {
+  const state = reachScene('zorro');
+  const { tunnel, rock } = currentGeometry(state);
+  assert.equal(tunnelFloorAt(tunnel.x - 100, tunnel), GROUND);
+  assert.equal(tunnelFloorAt(tunnel.x, tunnel), GROUND);
+  assert.equal(tunnelFloorAt(tunnel.x + tunnel.width / 2, tunnel), GROUND + 100);
+  assert.equal(tunnelFloorAt(tunnel.x + tunnel.width + 100, tunnel), GROUND);
+  assert.ok(tunnelFloorAt(rock.x, tunnel) - tunnel.clearance >= GROUND);
+  go(state, 470);
+  pulse(state);
+  for (let i = 0; i < 3; i += 1) {
+    pulse(state, 'up', RIGHT);
+    tick(state, RIGHT, 1);
+  }
+  assert.equal(state.x, tunnel.x - RADIUS);
+  assert.equal(state.solved, false);
+  assert.equal(state.tunnelEntered, false);
+});
+
+test('el elefante gira con una acción y solo ayuda con otra tras darse la vuelta', () => {
+  const state = reachScene('elefante');
+  assert.equal(state.elephantRevealed, false);
+  assert.equal(state.revealProgress, 0);
+  pulse(state);
+  tick(state, {}, 1);
+  assert.equal(state.elephantRevealed, false, 'Hay que llamarlo de cerca');
   go(state, 480);
   tick(state, {}, 0.2);
   const liftX = state.x;
+  pulse(state);
+  assert.equal(state.elephantRevealed, true);
+  assert.equal(state.helped, false);
+  assert.equal(state.lifting, false);
+  assert.equal(state.y, GROUND);
+  tick(state, {}, ELEPHANT_REVEAL_DURATION / 2);
+  assert.ok(state.revealProgress > 0 && state.revealProgress < 1);
+  pulse(state);
+  assert.equal(state.helped, false, 'Otra pulsación durante el giro no inicia la ayuda');
+  assert.equal(state.grounded, true, 'La pulsación tampoco dispara un salto');
+  tick(state, {}, ELEPHANT_REVEAL_DURATION);
+  assert.equal(state.revealProgress, 1);
+  assert.equal(state.helped, false, 'El fin del giro espera una segunda acción');
   pulse(state);
   tick(state, {}, 0.5);
   assert.equal(state.x, liftX);
@@ -270,6 +339,10 @@ test('el elefante sube sin teletransportar horizontalmente y deja avanzar sobre 
   assert.equal(state.y, 318);
   go(state, 900);
   assert.equal(state.solved, true);
+  leave(state);
+  assert.equal(sceneId(state), 'charco');
+  assert.equal(state.elephantRevealed, false);
+  assert.equal(state.revealProgress, 0);
 });
 
 test('caminar al charco devuelve a la orilla sin perder progreso ni vidas', () => {
@@ -347,47 +420,157 @@ test('el cocodrilo necesita espacio cercano; flecha arriba no lo despierta', () 
   assert.equal(state.solved, true);
 });
 
-test('los juncos no se pueden saltar ni cruzar de pie', () => {
-  const state = reachScene(7);
-  tick(state, RIGHT, 3);
-  assert.equal(state.x, 446);
-  pulse(state, 'up', RIGHT);
-  tick(state, RIGHT, 1);
-  assert.equal(state.x, 446);
+test('los juncos ocupan dos páginas, ocultan al conejo y permiten avanzar o retroceder de pie', () => {
+  const state = reachScene('juncos');
+  const geometry = currentGeometry(state);
+  assert.equal(sceneWidth(state), 2560);
+  assert.deepEqual(geometry.reeds, { left: 380, right: 2160 });
+  assert.equal(geometry.tunnel, undefined);
+  go(state, 390);
+  assert.equal(state.hiddenInReeds, false, 'Aún asoma parte del cuerpo por el borde');
+  go(state, 410);
+  assert.equal(state.hiddenInReeds, true, 'Solo desaparece cuando todo el cuerpo entra');
+  assert.equal(state.ducking, false);
+  go(state, 1200);
+  assert.equal(state.y, GROUND);
+  assert.equal(state.cameraX, state.x - 520);
+  assert.equal(state.cameraY, 0);
+  assert.equal(state.solved, false, 'La primera página no completa el juncal');
+  until(state, current => current.x <= 370, { left: true });
+  assert.equal(state.hiddenInReeds, false);
+  assert.equal(state.ducking, false);
+  assert.equal(state.cameraX, 0);
+  go(state, 800, { right: true, down: true });
+  assert.equal(state.ducking, true);
+  const crouchedX = state.x;
+  tick(state, RIGHT, 0.4);
+  assert.ok(state.x > crouchedX, 'Soltar abajo no detiene el avance entre plantas');
+  assert.equal(state.ducking, false);
+  go(state, 2140);
+  assert.equal(state.hiddenInReeds, false, 'El borde derecho vuelve a mostrar el cuerpo');
   assert.equal(state.solved, false);
-  go(state, 1000, { right: true, down: true });
+  go(state, 2240);
+  assert.equal(state.cameraX, WIDTH);
   assert.equal(state.solved, true);
+  assert.equal(state.y, GROUND);
+  leave(state);
+  assert.equal(sceneId(state), 'pared');
+  assert.equal(state.cameraX, 0);
+  assert.equal(state.hiddenInReeds, false);
 });
 
-test('la serpiente eleva a la pared y la salida conserva el suelo alto', () => {
-  const state = reachScene(8);
+test('la pared es un paso propio que solo descubre la serpiente al mirar arriba de cerca', () => {
+  const state = reachScene('pared');
+  assert.equal(SCENES[state.scene].helper, null);
+  assert.equal(currentGeometry(state).tree, undefined);
+  pulse(state);
+  tick(state, RIGHT, 4);
+  assert.equal(sceneId(state), 'pared');
+  assert.equal(state.x, currentGeometry(state).wall.x - RADIUS);
+  assert.equal(state.solved, false);
+  assert.equal(state.helped, false);
+  pulse(state);
+  assert.equal(sceneId(state), 'serpiente');
+  assert.ok(state.completed.includes('pared'));
+  assert.equal(state.x, 100, 'La acción se consume una sola vez al cambiar de pantalla');
+  assert.equal(state.helped, false);
+  assert.equal(state.snakePhase, 'coiled');
+});
+
+test('la serpiente baja la cabeza, eleva desde la rama y la cámara revela la cima real', () => {
+  const state = reachScene('serpiente');
+  assert.equal(state.snakePhase, 'coiled');
+  assert.equal(state.cameraY, 0);
   tick(state, RIGHT, 4);
   assert.equal(state.x, 826);
   assert.equal(state.solved, false);
   until(state, current => current.x <= 550, { left: true });
   tick(state, {}, 0.2);
+  const liftX = state.x;
   pulse(state);
-  tick(state, {}, 1.2);
-  assert.equal(state.y, 300);
+  assert.equal(state.snakePhase, 'lowering');
+  assert.equal(state.helped, true);
+  assert.equal(state.lifting, false);
+  tick(state, {}, SNAKE_HELP_DURATION * SNAKE_LOWERING_PROGRESS - 0.1);
+  assert.equal(state.y, GROUND, 'No eleva antes de que la cabeza llegue al conejo');
+  assert.equal(state.assistY, GROUND);
+  assert.equal(state.snakePhase, 'lowering');
+  tick(state, {}, 0.7);
+  assert.equal(state.snakePhase, 'lifting');
+  assert.equal(state.lifting, true);
+  assert.ok(state.y < GROUND && state.y > currentGeometry(state).liftY);
+  assert.equal(state.x, liftX, 'La ayuda conserva la posición horizontal');
+  tick(state, {}, 0.5);
+  assert.ok(state.cameraY < 0);
+  assert.equal(state.cameraY, Math.min(0, state.y - 340));
+  tick(state, {}, 1.3);
+  assert.equal(state.snakePhase, 'resting');
+  assert.equal(state.helpProgress, 1);
+  assert.equal(state.y, -220);
+  assert.equal(state.cameraY, -560);
   go(state, 1200);
   assert.equal(state.solved, true);
-  assert.equal(state.y, 300);
+  assert.equal(state.y, -220);
   assert.equal(state.grounded, true);
   leave(state);
-  assert.equal(state.scene, 9);
+  assert.equal(sceneId(state), 'zanahoria');
   assert.equal(state.y, GROUND);
-  assert.deepEqual(state.completed, SCENES.slice(0, 9).map(scene => scene.id));
+  assert.equal(state.cameraY, 0);
+  assert.equal(state.snakePhase, 'coiled');
+  assert.deepEqual(state.completed, SCENES.slice(0, SCENE_IDS.zanahoria).map(scene => scene.id));
 });
 
-test('el recorrido completo requiere saludar al conejo y termina con las diez pruebas', () => {
-  const state = reachScene(9);
+test('avanzar durante la ayuda de la serpiente espera la cima sin flotar ni atravesar la pared', () => {
+  const state = reachScene('serpiente');
+  go(state, 535);
+  pulse(state, 'action', RIGHT);
+  go(state, 826);
+  assert.equal(state.helped, true);
+  assert.equal(state.solved, false);
+  assert.ok(state.y > currentGeometry(state).wall.top);
+  until(state, current => current.snakePhase === 'resting', RIGHT);
+  assert.ok(state.x >= 826 && state.x < 850 + RADIUS);
+  assert.equal(state.y, currentGeometry(state).wall.top);
+  assert.equal(state.grounded, true);
+  go(state, 1050);
+  assert.equal(state.solved, true);
+  assert.equal(state.y, -220);
+  assert.equal(state.grounded, true);
+  assert.equal(state.resetCount, 0);
+});
+
+test('la zanahoria solitaria precede al conejo y se supera caminando sin recogerla', () => {
+  const state = reachScene('zanahoria');
+  assert.equal(currentGeometry(state).carrotX, 900);
+  assert.equal(currentGeometry(state).friendX, undefined);
+  assert.equal(SCENES[state.scene].helper, null);
+  go(state, 920);
+  assert.equal(state.solved, false);
+  go(state, 960);
+  assert.equal(state.solved, true);
+  assert.equal(Object.hasOwn(state, 'carrots'), false);
+  leave(state);
+  assert.equal(sceneId(state), 'conejo');
+  assert.equal(currentGeometry(state).carrotX, undefined);
+  assert.equal(state.friendGreeted, false);
+});
+
+test('el recorrido completo requiere saludar al conejo y caminar juntos para terminar las doce pruebas', () => {
+  const state = reachScene('conejo');
   pulse(state);
   assert.equal(state.mode, 'playing');
   tick(state, RIGHT, 5);
   assert.equal(state.mode, 'playing', 'Llegar al borde no sustituye saludar al amigo');
-  assert.equal(state.scene, 9);
+  assert.equal(sceneId(state), 'conejo');
+  assert.equal(state.friendGreeted, false);
   until(state, current => current.x <= 1010, { left: true });
   pulse(state);
+  assert.equal(state.friendGreeted, true);
+  assert.equal(state.mode, 'playing', 'Saludar no salta directamente al huerto');
+  assert.equal(state.completed.length, SCENES.length - 1);
+  tick(state, {}, 0.3);
+  assert.equal(state.mode, 'playing');
+  until(state, current => current.mode === 'ending', RIGHT);
   assert.equal(state.mode, 'ending');
   assert.deepEqual(state.completed, SCENES.map(scene => scene.id));
   assert.match(getHint(state), /Llegaste/);
@@ -397,8 +580,9 @@ test('el recorrido completo requiere saludar al conejo y termina con las diez pr
 });
 
 test('reiniciar borra el progreso, la ayuda y los estados transitorios', () => {
-  const state = reachScene(3);
+  const state = reachScene('conejo');
   solveCurrent(state);
+  assert.equal(state.friendGreeted, true);
   restartGame(state);
   assert.deepEqual(state, playing());
 });

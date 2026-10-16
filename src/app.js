@@ -202,7 +202,7 @@ document.addEventListener('keydown', (event) => {
 function updateUI(force = false) {
   const mode = mapOpen ? 'map' : paused ? 'paused' : state.mode;
   const scene = SCENES[state.scene];
-  const key = `${mode}:${state.scene}:${state.helped}:${state.completed.length}`;
+  const key = `${mode}:${state.scene}:${state.helped}:${state.completed.length}:${state.elephantRevealed}:${state.friendGreeted}:${state.hiddenInReeds}`;
   if (force || key !== lastUI) {
     lastUI = key;
     $('#intro').hidden = state.mode !== 'title' || mapOpen;
@@ -219,11 +219,13 @@ function updateUI(force = false) {
     $('#chapter-number').textContent = `Un paso más · ${state.scene + 1} de ${SCENES.length}`;
     $('#page-number').textContent = state.mode === 'title' ? 'Un paso, una historia' : state.mode === 'ending' ? 'Fin… y un nuevo comienzo' : `${state.scene + 1} / ${SCENES.length}`;
     $('.spread').classList.toggle('is-night', mapOpen || state.mode === 'ending');
+    $('.spread').classList.toggle('is-map', mapOpen);
     canvas.setAttribute('aria-label', mapOpen ? 'Mapa panorámico del recorrido completo: piedras, animales, ríos, juncos, pared y huerto.' : state.mode === 'ending' ? 'Los dos conejos juntos en un huerto de zanahorias al atardecer.' : `${scene.title}. ${scene.description}`);
     $('#map-description').textContent = state.completed.length === SCENES.length ? '¡Lo recorrimos entero! Gracias por acompañarnos.' : `Hemos recorrido ${state.completed.length} de ${SCENES.length} tramos. Cada amigo nos ayuda a seguir.`;
+    $('#map-legend').style.setProperty('--scene-count', SCENES.length);
     $('#map-legend').replaceChildren(...SCENES.map((item, index) => {
       const li = document.createElement('li');
-      li.textContent = ['La piedra', 'Tortuga', 'Zorro', 'Elefante', 'El charco', 'Jirafa', 'Cocodrilo', 'Los juncos', 'Serpiente', 'El huerto'][index];
+      li.textContent = item.mapLabel || item.title;
       li.dataset.number = String(index + 1);
       if (state.completed.includes(item.id)) li.classList.add('visited');
       else if (index === state.scene) li.classList.add('current');
@@ -239,19 +241,36 @@ function updateUI(force = false) {
     $('#hint').textContent = hint;
     lastHint = hint;
   }
-  const storyLines = ['¡Vamos!', '¿Me ayudas, tortuga?', '¿Hay un camino por debajo?', '¡Qué roca tan grande!', '¡Un charco!', '¡Hola, jirafa!', 'Zzz…', '¿Quién se esconde ahí?', '¿Me ayudas, serpiente?', '¡Hola!'];
+  const storyLines = {
+    piedra: '¡Vamos!', tortuga: '¿Me ayudas, tortuga?',
+    zorro: '¿Hay un camino por debajo?',
+    elefante: state.elephantRevealed ? '¡Hola, elefante!' : '¡Qué dos rocas tan grandes!',
+    charco: '¡Un charco!', jirafa: '¡Holaaaaa!', cocodrilo: 'Zzz…',
+    juncos: '', pared: '¿Y ahora…?',
+    serpiente: state.snakePhase === 'lowering' ? '¿Me ayudas?' : '¡Hola, serpiente! ¿Puedes oírme?',
+    zanahoria: '¡Una zanahoria!', conejo: state.friendGreeted ? '¡Vamos juntos!' : '¡Hola!',
+  };
   const nearby = state.x > 340 && state.x < 790;
-  const line = state.helped ? (state.helpProgress < 1 ? `¡Gracias, ${scene.helper}!` : '') : storyLines[state.scene];
-  const message = state.mode === 'playing' && !paused && !mapOpen && nearby && !state.solved ? line : '';
+  const helping = state.helped && state.snakePhase !== 'lowering';
+  const line = helping ? (state.helpProgress < 1 ? `¡Gracias, ${scene.helper}!` : '') : storyLines[scene.id];
+  const message = state.mode === 'playing' && !paused && !mapOpen && nearby && !state.solved && !state.hiddenInReeds ? line : '';
   if ($('#speech').textContent !== message) $('#speech').textContent = message;
   $('#speech').hidden = !message;
   const debug = $('#game-state');
   debug.dataset.mode = mode;
   debug.dataset.scene = String(state.scene);
+  debug.dataset.sceneId = scene.id;
   debug.dataset.x = String(Math.round(state.x));
   debug.dataset.y = String(Math.round(state.y));
   debug.dataset.helped = String(state.helped);
   debug.dataset.ducking = String(state.ducking);
+  debug.dataset.hiddenInReeds = String(Boolean(state.hiddenInReeds));
+  debug.dataset.elephantRevealed = String(Boolean(state.elephantRevealed));
+  debug.dataset.revealProgress = String(state.revealProgress || 0);
+  debug.dataset.snakePhase = state.snakePhase || 'coiled';
+  debug.dataset.friendGreeted = String(Boolean(state.friendGreeted));
+  debug.dataset.cameraX = String(Math.round(state.cameraX || 0));
+  debug.dataset.cameraY = String(Math.round(state.cameraY || 0));
 }
 
 function frame(timestamp) {

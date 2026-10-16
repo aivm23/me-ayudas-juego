@@ -7,7 +7,7 @@ en vídeo.
 
 **[Jugar en el navegador](https://aivm23.github.io/me-ayudas-juego/)**
 
-Diez pantallas conectadas, ilustración original mediante Canvas 2D y un mapa
+Doce pantallas conectadas, ilustración original mediante Canvas 2D y un mapa
 panorámico del camino. Sin sonido, cuentas, analítica ni conexiones externas
 durante el juego. HTML, CSS y JavaScript nativos, sin framework ni compilación.
 
@@ -18,7 +18,7 @@ durante el juego. HTML, CSS y JavaScript nativos, sin framework ni compilación.
 | ← / → | Caminar |
 | Espacio | Saltar; cerca de un amigo, pedir ayuda |
 | ↑ | Otra forma de saltar |
-| ↓ | Agacharse para atravesar el túnel y los juncos |
+| ↓ + ← / → | Recorrer agachado el túnel del zorro |
 | Esc | Pausar o continuar; cerrar el mapa |
 
 El cuento empieza también con la barra espaciadora. En móvil hay controles
@@ -26,6 +26,15 @@ táctiles que permiten mantener pulsada una dirección mientras se salta.
 Los botones superiores abren el mapa y la pausa; desde la pausa se puede
 volver al principio. No hay vidas ni límite de tiempo. Si caes al agua,
 vuelves a la orilla para intentarlo de nuevo.
+
+El zorro muestra un túnel excavado bajo la roca. El elefante aparece primero
+de espaldas: el primer espacio lo hace girar y el segundo pide su ayuda.
+La jirafa espera al otro lado del río y acerca el cuello hasta tu orilla.
+Los juncos se atraviesan caminando: el conejo desaparece entre ellos y puedes
+seguir con → o retroceder con ← hasta reaparecer. Ante la pared, espacio
+permite mirar arriba; la serpiente baja desde su rama y te eleva a la meseta.
+Después encontrarás una zanahoria solitaria y, en la siguiente pantalla, al
+conejo marrón. Salúdalo y sigue caminando con él hasta el huerto.
 
 ## Ejecutar
 
@@ -51,11 +60,17 @@ pnpm verify
 - `pnpm check`: sintaxis de JavaScript e integridad de los recursos del juego.
 - `pnpm test`: física, colisiones, ayudas, progresión, reintentos y seguridad
   del servidor estático, con el ejecutor de pruebas de Node.
-- `pnpm test:e2e`: teclado, recorrido jugable, pausa, mapa, reinicio y móvil,
-  con navegadores reales y perfiles temporales aislados.
+- `pnpm test:e2e`: teclado, las doce pantallas y sus pasos intermedios, pausa,
+  mapa, reinicio y móvil, con navegadores reales y perfiles temporales aislados.
 
-Playwright ejecuta Chromium, Firefox y WebKit. Los fallos conservan trazas
-y capturas en directorios ignorados por Git. Para examinar el informe:
+Playwright comprueba la interfaz en Chromium, Firefox y WebKit y ejecuta el
+recorrido completo con controles reales en Chromium. Cubre el giro del
+elefante, el descenso por el túnel, la marcha y el retorno entre los juncos,
+la pared previa, el ascenso de la serpiente y el encuentro antes del huerto.
+La fidelidad de las ilustraciones se revisa con capturas del juego y los
+fotogramas originales; los atributos de estado prueban las reglas y la
+progresión. Los fallos conservan trazas y capturas en directorios ignorados
+por Git. Para examinar el informe:
 `pnpm exec playwright show-report`.
 
 Para comprobar solo Chromium y Firefox en un sistema que no tenga las
@@ -81,8 +96,8 @@ dependencias de desarrollo. No hay dependencias de ejecución.
 index.html            Interfaz accesible
 styles.css            Tipografía, libro y controles adaptables
 src/app.js            Teclado, táctil, pausa y presentación
-src/engine.js         Física y diez pruebas, independiente del DOM
-src/art.js            Paisaje, animales y panorama en Canvas 2D
+src/engine.js         Física y doce etapas, independiente del DOM
+src/art.js            Paisaje, animales, cámaras y panorama en Canvas 2D
 assets/               Tipografías libres y favicon
 tests/                Pruebas del motor y del navegador
 scripts/              Servidor, comprobación y empaquetado estático

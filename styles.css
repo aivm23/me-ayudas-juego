@@ -432,7 +432,7 @@ kbd {
   bottom:5%;
   list-style:none;
   display:grid;
-  grid-template-columns:repeat(10,1fr);
+  grid-template-columns:repeat(var(--scene-count,12),1fr);
   padding:0;
   gap:7px;
   margin:0;
@@ -932,6 +932,37 @@ dialog>div {
   }
   .speech {
     font-size:13px
+  }
+}
+
+@media(max-width:620px) and (orientation:portrait) {
+  .spread.is-map {
+    overflow:visible;
+    margin-bottom:110px;
+  }
+  .spread.is-map .map-legend {
+    left:0;
+    right:0;
+    bottom:-104px;
+    grid-template-columns:repeat(6,1fr);
+    gap:10px 4px;
+    color:var(--ink);
+  }
+  .spread.is-map .map-legend li {
+    display:block;
+    writing-mode:horizontal-tb;
+    text-orientation:mixed;
+    max-height:none;
+    font-size:9px;
+    line-height:1.2;
+  }
+  .spread.is-map .map-legend li::before {
+    display:block;
+    margin:0 auto 4px;
+    border-color:#758c7c;
+  }
+  .spread.is-map .map-legend li.current::before {
+    outline-color:var(--focus);
   }
 }
 

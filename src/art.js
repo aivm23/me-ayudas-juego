@@ -1,4 +1,4 @@
-import { WIDTH, HEIGHT, GROUND, SCENE_GEOMETRY } from './engine.js';
+import { WIDTH, HEIGHT, GROUND, SCENES, SCENE_GEOMETRY, tunnelFloorAt } from './engine.js';
 
 // Todas las formas de este libro se pintan aquí: no hay imágenes descargadas,
 // fuentes gráficas ni fotogramas del vídeo incluidos en el juego.
@@ -151,20 +151,21 @@ function rock(ctx, x, width, top, paper, seed = 8, base = GROUND) {
 }
 
 function ground(ctx, scene, paper, options = {}) {
+  const width = options.width || WIDTH;
   const isDusk = options.ending || scene >= 8;
-  const topColor = options.ending ? '#554741' : scene >= 7 ? '#928357' : scene >= 3 ? '#8c7252' : '#7e8055';
+  const topColor = options.ending ? '#554741' : options.plateau ? '#a8a499' : scene >= 7 ? '#928357' : scene >= 3 ? '#8c7252' : '#7e8055';
   const gradient = ctx.createLinearGradient(0, GROUND, 0, HEIGHT);
   gradient.addColorStop(0, topColor);
-  gradient.addColorStop(0.32, options.ending ? '#49423a' : '#8b7c50');
-  gradient.addColorStop(1, options.ending ? '#292e2d' : isDusk ? '#716647' : '#78764b');
-  const p = new Path2D(`M0 ${GROUND} C230 ${GROUND - 1},370 ${GROUND + 2},540 ${GROUND} C850 ${GROUND + 2},1070 ${GROUND - 2},1280 ${GROUND} L1280 720 L0 720Z`);
-  paint(ctx, p, gradient, [0, GROUND - 3, WIDTH, HEIGHT - GROUND + 3], paper, 671 + scene, 1.5);
+  gradient.addColorStop(0.32, options.ending ? '#49423a' : options.plateau ? '#aaa69b' : '#8b7c50');
+  gradient.addColorStop(1, options.ending ? '#292e2d' : options.plateau ? '#939186' : isDusk ? '#716647' : '#78764b');
+  const p = new Path2D(`M0 ${GROUND} C230 ${GROUND - 1},370 ${GROUND + 2},540 ${GROUND} C850 ${GROUND + 2},1070 ${GROUND - 2},${width} ${GROUND} L${width} 720 L0 720Z`);
+  paint(ctx, p, gradient, [0, GROUND - 3, width, HEIGHT - GROUND + 3], paper, 671 + scene, 1.5);
   const rng = random(719 + scene);
   ctx.save();
   ctx.clip(p);
-  for (let i = 0; i < 90; i += 1) {
+  for (let i = 0; i < Math.round(90 * width / WIDTH); i += 1) {
     const y = GROUND + 10 + rng() * 150;
-    const x = rng() * WIDTH;
+    const x = rng() * width;
     ctx.strokeStyle = i % 3 ? '#b5a2690a' : '#3f4f3609';
     ctx.lineWidth = rng() * 12 + 1;
     ctx.beginPath();
@@ -305,7 +306,7 @@ function fox(ctx, x, feet, paper, helped = false) {
   ctx.restore();
 }
 
-function elephant(ctx, x, feet, paper, state) {
+function elephantProfile(ctx, x, feet, paper, state) {
   const p = ease(clamp(state.helpProgress || 0, 0, 1));
   ctx.save();
   ctx.translate(x, feet);
@@ -343,6 +344,33 @@ function elephant(ctx, x, feet, paper, state) {
   ctx.restore();
 }
 
+function elephant(ctx, x, feet, paper, state) {
+  const turn = ease(clamp(state.revealProgress || 0, 0, 1));
+  if (turn < 1) {
+    ctx.save();
+    ctx.translate(x, feet);
+    ctx.globalAlpha *= 1 - Math.max(0, (turn - 0.35) / 0.65);
+    ctx.scale(mix(1, 0.72, turn), 1);
+    // De espaldas solo se ven una grupa redonda, dos patas y la colita.
+    // La estrecha rendija entre las patas desvela la segunda «piedra».
+    const rear = new Path2D('M-103 -2 C-111 -41 -109 -120 -114 -174 C-119 -244 -91 -302 -46 -326 C-20 -342 13 -342 40 -329 C91 -307 116 -248 115 -183 L108 -5 Q76 3 32 -2 L19 -100 L12 -99 L7 -3 Q-45 4 -103 -2Z');
+    const shade = ctx.createLinearGradient(-100, -330, 90, 0);
+    shade.addColorStop(0, '#494540');
+    shade.addColorStop(0.42, '#514c44');
+    shade.addColorStop(1, '#3e3c36');
+    paint(ctx, rear, shade, [-120, -343, 242, 350], paper, 110, 1.6);
+    line(ctx, 'M-13 -241 C-12 -219 -20 -200 -7 -179 Q1 -164 20 -164 M16 -171 l13 12 M14 -169 l8 14 M10 -168 l2 13', '#302f2b', 2.2);
+    line(ctx, 'M-92 -61 q31 8 61 2 M39 -51 q31 8 64 -3', '#81736228', 1.2);
+    ctx.restore();
+  }
+  if (turn > 0) {
+    ctx.save();
+    ctx.globalAlpha *= clamp((turn - 0.12) / 0.88, 0, 1);
+    elephantProfile(ctx, x, feet, paper, state);
+    ctx.restore();
+  }
+}
+
 function bezierPoint(points, t) {
   const a = 1 - t;
   return {
@@ -352,13 +380,14 @@ function bezierPoint(points, t) {
 }
 
 function ribbon(points, width, steps = 48) {
+  const pointAt = typeof points === 'function' ? points : (t) => bezierPoint(points, t);
   const left = [];
   const right = [];
   for (let i = 0; i <= steps; i += 1) {
     const t = i / steps;
-    const point = bezierPoint(points, t);
-    const next = bezierPoint(points, Math.min(1, t + 0.001));
-    const previous = bezierPoint(points, Math.max(0, t - 0.001));
+    const point = pointAt(t);
+    const next = pointAt(Math.min(1, t + 0.001));
+    const previous = pointAt(Math.max(0, t - 0.001));
     const dx = next.x - previous.x;
     const dy = next.y - previous.y;
     const length = Math.hypot(dx, dy) || 1;
@@ -375,38 +404,62 @@ function ribbon(points, width, steps = 48) {
 
 function giraffe(ctx, paper, progress = 0) {
   const p = ease(clamp(progress, 0, 1));
-  const x = 494;
-  const base = GROUND;
-  // El cuerpo permanece en la orilla; el largo cuello llega hasta la otra.
-  shape(ctx, 'M477 524 L477 560 L487 560 L490 525 M508 526 L512 560 L522 560 L520 516', '#d69a52');
-  shape(ctx, 'M477 556 L487 556 L487 561 L476 561Z M511 556 L523 556 L523 561 L512 561Z', '#635449');
-  paint(ctx, 'M473 521 Q474 501 491 499 Q510 499 522 517 L516 541 L484 541Z', '#dda04e', [470, 497, 56, 47], paper, 130, 1);
-  const points = [
-    { x: 510, y: 531 },
-    { x: mix(505, 560, p), y: mix(460, 571, p) },
-    { x: mix(474, 776, p), y: mix(299, 578, p) },
-    { x: mix(474, 868, p), y: mix(211, 578, p) },
-  ];
-  const neck = ribbon(points, 37);
-  paint(ctx, neck, '#dfa04d', [453, 190, 443, 411], paper, 131, 0.8);
+  const gold = '#dca050';
+  // Las cuatro patas y la grupa se quedan siempre en la orilla derecha.
+  const bodyTop = mix(245, 423, p);
+  const bodyBottom = bodyTop + 82;
+  const body = new Path2D(`M941 ${bodyTop + 8} Q989 ${bodyTop - 8},1044 ${bodyTop + 11} Q1090 ${bodyTop + 15},1091 ${bodyTop + 57} L1080 ${bodyBottom} L961 ${bodyBottom} Q941 ${bodyBottom - 4},941 ${bodyTop + 8}Z`);
+  const feet = [966, 990, 1062, 1084];
+  for (let i = 0; i < feet.length; i += 1) {
+    const xx = feet[i];
+    const hip = bodyBottom - (i < 2 ? 7 : 16);
+    const bend = i < 2 ? xx + p * 67 : xx + p * 33;
+    const knee = mix(hip + 95, 537, p);
+    const path = new Path2D(`M${xx - 7} ${hip} Q${xx - 8} ${knee - 12},${bend - 7} ${knee} L${xx + p * (i < 2 ? 69 : -14) - 6} 554 Q${xx + p * (i < 2 ? 69 : -14)} 562,${xx + p * (i < 2 ? 69 : -14) + 8} 556 L${bend + 6} ${knee} Q${xx + 7} ${knee - 15},${xx + 7} ${hip}Z`);
+    paint(ctx, path, i % 2 ? '#ce914c' : gold, [xx - 12, hip, 95, GROUND - hip + 3], paper, 128 + i, 0.8);
+    ellipse(ctx, xx + p * (i < 2 ? 69 : -14), 557, 10, 3.5, '#6c5140');
+  }
+  paint(ctx, body, gold, [938, bodyTop - 5, 160, 99], paper, 130, 1.1);
   ctx.save();
-  ctx.clip(neck);
-  for (let i = 0; i < 14; i += 1) {
-    const point = bezierPoint(points, i / 13);
-    const offset = i % 2 ? -10 : 7;
-    ellipse(ctx, point.x + (1 - p) * offset, point.y + p * offset, 8 + i % 3, 11 - i % 4, '#ad5746', i * 0.4);
+  ctx.clip(body);
+  for (let i = 0; i < 18; i += 1) {
+    const xx = 946 + (i % 6) * 27;
+    const yy = bodyTop + 13 + Math.floor(i / 6) * 26;
+    ellipse(ctx, xx, yy, 9 + i % 4, 9 + i % 3, '#a8493c', i * 0.51);
   }
   ctx.restore();
-  for (let i = 0; i < 53; i += 1) {
-    const point = bezierPoint(points, i / 52);
-    line(ctx, `M${point.x + (1 - p) * 19} ${point.y - p * 19} l${mix(10, 0, p)} ${mix(0, -10, p)}`, '#755845', 1.15);
-  }
-  const end = points[3];
+  line(ctx, `M1084 ${bodyTop + 31} Q1122 ${bodyTop + 64},1141 ${bodyTop + 47}`, '#c68b4b', 5);
+  for (let i = 0; i < 8; i += 1) line(ctx, `M1134 ${bodyTop + 50} l${9 + i} ${i * 3 - 10}`, '#765342', 1);
+  const standing = [
+    { x: 957, y: 283 }, { x: 929, y: 204 },
+    { x: 925, y: 63 }, { x: 916, y: 41 },
+  ];
+  const points = (t) => {
+    const upright = bezierPoint(standing, t);
+    const kneeling = t < 0.32
+      ? bezierPoint([{ x: 957, y: 461 }, { x: 912, y: 461 }, { x: 896, y: 578 }, { x: 850, y: 578 }], t / 0.32)
+      : { x: mix(850, 563, (t - 0.32) / 0.68), y: 578 };
+    return { x: mix(upright.x, kneeling.x, p), y: mix(upright.y, kneeling.y, p) };
+  };
+  const neck = ribbon(points, mix(42, 43, p));
+  paint(ctx, neck, gold, [537, 9, 449, 596], paper, 131, 1);
   ctx.save();
-  ctx.translate(end.x, end.y - p * 10);
-  ctx.scale(mix(1, -1, p) || 0.01, 1);
+  ctx.clip(neck);
+  for (let i = 0; i < 22; i += 1) {
+    const point = points(i / 21);
+    const offset = i % 2 ? -10 : 8;
+    ellipse(ctx, point.x + (1 - p) * offset, point.y + p * offset, 9 + i % 3, 11 - i % 4, '#ab5140', i * 0.4);
+  }
+  ctx.restore();
+  for (let i = 0; i < 67; i += 1) {
+    const point = points(i / 66);
+    line(ctx, `M${point.x + (1 - p) * 20} ${point.y - p * 22} l${mix(10, -1, p)} ${mix(-2, -11, p)}`, '#76533f', 1.1);
+  }
+  const end = points(1);
+  ctx.save();
+  ctx.translate(end.x, end.y - p * 12);
   const head = new Path2D('M10 9 Q14 -9 2 -17 L-19 -20 L-53 4 Q-70 14 -64 26 Q-57 36 -44 26 L-15 20 Q1 25 10 9Z');
-  paint(ctx, head, '#e0a351', [-68, -24, 85, 62], paper, 134, 0.8);
+  paint(ctx, head, '#dfa351', [-68, -24, 85, 62], paper, 134, 0.8);
   shape(ctx, 'M-10 -16 L-8 -38 L-2 -38 L-1 -15 M4 -14 L11 -35 L16 -32 L12 -11', '#d49d5c');
   ellipse(ctx, -5, -38, 4.5, 3.5, '#735846');
   ellipse(ctx, 14, -34, 4.2, 3.6, '#735846');
@@ -416,7 +469,6 @@ function giraffe(ctx, paper, progress = 0) {
   ellipse(ctx, -19, -2, 2.8, 4.5, '#312f29');
   ellipse(ctx, -56, 19, 3, 4, '#9d6148');
   ctx.restore();
-  ellipse(ctx, x - 1, base - 29, 5, 7, '#ae5b45', -0.6);
 }
 
 function crocodile(ctx, paper, progress = 0, time = 0) {
@@ -463,86 +515,147 @@ function crocodile(ctx, paper, progress = 0, time = 0) {
   ctx.restore();
 }
 
-function reeds(ctx, paper, foreground = false) {
-  const rng = random(149);
+function reeds(ctx, paper, foreground = false, extent = { left: 380, right: 2160 }) {
+  const { left, right } = extent;
+  const rng = random(foreground ? 152 : 149);
+  const width = right - left;
   if (!foreground) {
-    const tail = new Path2D('M747 544 C750 503 757 444 729 407 C714 388 686 389 684 408 C683 420 693 426 699 419 C693 414 694 404 705 407 C738 418 737 486 731 541Z');
-    paint(ctx, tail, '#d99156', [682, 389, 80, 160], paper, 151, 1);
-    ctx.save();
-    ctx.clip(tail);
-    for (let i = 0; i < 11; i += 1) {
-      line(ctx, `M${672 + i * 7} ${400 + i * 13} l50 -13`, '#3e3830', 8);
-    }
-    ctx.restore();
+    // La mata es una franja continua de dos páginas, con una base opaca.
+    const haze = ctx.createLinearGradient(0, 348, 0, GROUND);
+    haze.addColorStop(0, '#c9b87600');
+    haze.addColorStop(0.32, '#b8a267a8');
+    haze.addColorStop(0.72, '#af955b');
+    haze.addColorStop(1, '#92784a');
+    const edge = new Path2D(`M${left} 559 L${left + 4} 475 Q${left + 18} 434,${left + 56} 418 Q${left + width * 0.48} 385,${right - 72} 412 Q${right - 8} 424,${right} 477 L${right} 566Z`);
+    paint(ctx, edge, haze, [left, 348, width, 219], paper, 147, 0.8);
   }
-  const count = foreground ? 109 : 145;
+  // Miles de tallos finos conservan el aspecto de hierba seca del libro.
+  const count = Math.round(width * (foreground ? 1.04 : 1.16));
   for (let i = 0; i < count; i += 1) {
-    const x = 469 + rng() * 465;
-    const height = (foreground ? 22 : 85) + rng() * (foreground ? 87 : 113);
+    const x = left + rng() * width;
+    const atEdge = clamp(Math.min(x - left, right - x) / 54, 0, 1);
+    const height = (foreground ? 30 + rng() * 108 : 106 + rng() * 106) * mix(0.46, 1, atEdge);
     const lean = rng() * 20 - 10;
-    const gold = i % 4 === 0;
-    ctx.globalAlpha = foreground ? 0.79 : 0.64;
-    line(ctx, `M${x} 563 Q${x - 3} ${560 - height * 0.5},${x + lean} ${560 - height}`, gold ? '#977842' : '#9f8151', foreground ? 1.45 : 1.1);
-    if (i % 3) {
-      ellipse(ctx, x + lean, 560 - height, 2.9 + rng() * 1.2, 5.2 + rng() * 2.6, gold ? '#b99b5a' : '#aa8850', lean * 0.03);
-    } else {
-      line(ctx, `M${x + lean} ${560 - height} l-3 -10 M${x + lean} ${560 - height} l4 -14`, '#ae945b', 1);
+    const colors = foreground ? ['#927140', '#aa8b4b', '#c0a164', '#79633c'] : ['#baa368', '#b59b59', '#c4ad6d', '#a88b4d'];
+    ctx.globalAlpha = foreground ? 0.87 : 0.75;
+    line(ctx, `M${x} ${GROUND + 3} Q${x - 3} ${GROUND - height * 0.5},${x + lean} ${GROUND - height}`, colors[i % 4], foreground ? 1.15 : 1.05);
+    if (i % 5 === 0) {
+      ellipse(ctx, x + lean, GROUND - height, 2.9 + rng() * 1.3, 3.7 + rng() * 2.1, colors[(i + 1) % 4], lean * 0.03);
+    } else if (i % 7 === 0) {
+      line(ctx, `M${x + lean} ${GROUND - height} l-3 -9 M${x + lean} ${GROUND - height} l4 -12`, colors[(i + 1) % 4], 0.8);
     }
   }
   ctx.globalAlpha = 1;
+  if (!foreground) {
+    // La cola rayada asoma al entrar, como en la doble página original.
+    const tail = new Path2D(`M${left + 93} 539 C${left + 103} 495,${left + 99} 453,${left + 73} 437 C${left + 58} 428,${left + 42} 434,${left + 45} 445 C${left + 46} 453,${left + 56} 454,${left + 59} 447 C${left + 59} 440,${left + 66} 443,${left + 71} 450 C${left + 90} 474,${left + 81} 514,${left + 79} 540Z`);
+    paint(ctx, tail, '#d99b57', [left + 40, 428, 67, 119], paper, 151, 1);
+    ctx.save();
+    ctx.clip(tail);
+    for (let i = 0; i < 9; i += 1) line(ctx, `M${left + 37 + i * 4} ${437 + i * 12} l62 -12`, '#493c2f', 6);
+    ctx.restore();
+  }
 }
 
-function cliff(ctx, paper, x = 850, top = 300, bottom = HEIGHT) {
-  const path = new Path2D(`M${x + 21} ${top} Q${x - 8} ${top + 6},${x - 1} ${top + 54} C${x + 10} ${top + 119},${x - 2} ${top + 186},${x + 10} ${bottom} L1280 ${bottom} L1280 ${top}Z`);
-  const gradient = ctx.createLinearGradient(x, top, 1150, 720);
-  gradient.addColorStop(0, '#b3a591');
-  gradient.addColorStop(0.48, '#a09580');
-  gradient.addColorStop(1, '#7e7762');
-  paint(ctx, path, gradient, [x - 10, top, WIDTH - x + 20, bottom - top], paper, 160, 1.9);
+function cliff(ctx, paper, x = 850, top = -220, bottom = HEIGHT) {
+  const path = new Path2D(`M${x + 34} ${top} Q${x - 10} ${top + 8},${x - 2} ${top + 67} C${x + 11} ${top + 151},${x - 8} ${top + 267},${x + 8} ${bottom} L1280 ${bottom} L1280 ${top}Z`);
+  const gradient = ctx.createLinearGradient(x, top, 1210, bottom);
+  gradient.addColorStop(0, '#b7ad9e');
+  gradient.addColorStop(0.48, '#a49b8c');
+  gradient.addColorStop(1, '#928b7b');
+  paint(ctx, path, gradient, [x - 12, top, WIDTH - x + 24, bottom - top], paper, 160, 1.9);
   ctx.save();
   ctx.clip(path);
-  line(ctx, `M${x + 48} ${top + 31} l-15 18 9 17 -3 11 M${x + 35} ${top + 190} l14 11 -7 16 5 17 M${x + 190} ${top + 141} l-9 17 9 11 1 20 M1138 ${top + 23} l-9 20 3 12`, '#655f4e33', 2);
+  const rng = random(161);
+  for (let i = 0; i < 27; i += 1) {
+    const xx = x + 26 + rng() * 390;
+    const yy = top + rng() * (bottom - top);
+    line(ctx, `M${xx} ${yy} l-7 13 9 10 -3 17 5 13`, '#665f5130', 1.2 + rng());
+    ellipse(ctx, xx - 4, yy + 30, 8 + rng() * 11, 17 + rng() * 22, '#dcd1b816', rng());
+  }
   ctx.restore();
-  line(ctx, `M${x + 25} ${top + 1} Q1060 ${top - 2} 1280 ${top}`, '#cec19e77', 2);
-  grass(ctx, x + 13, GROUND, 0.5, '#6b704d');
+  line(ctx, `M${x + 31} ${top + 1} Q1060 ${top - 2} 1280 ${top}`, '#d7ccaf75', 2);
+}
+
+function snakeTree(ctx, paper) {
+  // Una ramita nace del costado de la montaña, lejos de la cima.
+  const branch = new Path2D('M866 187 Q823 190 783 178 Q755 170 719 174 L717 182 Q752 178 777 188 Q822 201 866 201Z');
+  paint(ctx, branch, '#72684f', [713, 165, 156, 40], paper, 163, 1.4);
+  line(ctx, 'M786 184 Q767 158 753 147 M757 180 Q742 196 721 203 M813 192 Q793 212 774 223 M740 175 Q720 161 703 163', '#70664b', 3.2);
+  for (const [xx, yy, angle] of [[748, 150, -0.8], [735, 161, -0.7], [756, 163, 0.6], [721, 201, -0.7], [708, 203, 0.4], [775, 221, -0.4], [790, 211, -0.7], [704, 160, -0.2], [716, 169, 0.6]]) {
+    ctx.save();
+    ctx.translate(xx, yy);
+    ctx.rotate(angle);
+    paint(ctx, 'M0 8 Q-13 0 -8 -13 Q0 -22 4 -9 Q15 -15 14 -6 Q15 4 0 8Z', '#64724d', [-14, -22, 31, 33], paper, 164 + xx, 0.8);
+    ctx.restore();
+  }
+}
+
+const snakePatterns = new WeakMap();
+
+function snakeStroke(ctx, definition) {
+  const path = new Path2D(definition);
+  let pattern = snakePatterns.get(ctx);
+  if (!pattern) {
+    const tile = surface(48, 56);
+    const ink = tile.getContext('2d');
+    ink.fillStyle = '#b94c4b';
+    ink.fillRect(0, 0, 48, 56);
+    for (const [x, y] of [[9, 13], [34, 41]]) {
+      ellipse(ink, x, y, 7.2, 8, '#533a32', -0.25);
+      ellipse(ink, x + 0.7, y, 3.9, 4.7, '#cda163');
+      ellipse(ink, x + 1.2, y, 1.7, 2.7, '#6b4838');
+    }
+    pattern = ctx.createPattern(tile, 'repeat');
+    snakePatterns.set(ctx, pattern);
+  }
+  ctx.save();
+  ctx.lineJoin = 'round';
+  ctx.lineCap = 'round';
+  ctx.strokeStyle = '#813c3b';
+  ctx.lineWidth = 30;
+  ctx.stroke(path);
+  ctx.strokeStyle = '#dc7e59';
+  ctx.lineWidth = 26;
+  ctx.stroke(path);
+  ctx.strokeStyle = pattern;
+  ctx.lineWidth = 21;
+  ctx.stroke(path);
+  ctx.restore();
 }
 
 function snake(ctx, paper, state) {
-  const p = ease(clamp(state.helpProgress || 0, 0, 1));
-  const active = state.helped;
-  const head = {
-    x: active ? clamp(state.x || 550, 480, 850) : 563,
-    y: active ? (Number.isFinite(state.assistY) ? state.assistY : mix(GROUND, 300, p)) + 11 : 501,
-  };
-  const points = [
-    { x: 906, y: 304 },
-    { x: 800, y: 216 },
-    { x: active ? head.x + 113 : 792, y: active ? head.y + 50 : 502 },
-    head,
-  ];
-  const body = ribbon(points, 24);
-  paint(ctx, body, '#b64345', [head.x - 25, 220, 407, 360], paper, 167, 1.1);
-  ctx.save();
-  ctx.clip(body);
-  for (let i = 0; i < 24; i += 1) {
-    const point = bezierPoint(points, i / 23);
-    ellipse(ctx, point.x, point.y, 8.4, 8.7, '#4b3633');
-    ellipse(ctx, point.x + 1, point.y, 4.7, 5.1, '#d9b567');
-    ellipse(ctx, point.x + 2, point.y - 1, 2.8, 3.1, '#604436');
+  const progress = clamp(state.helpProgress || 0, 0, 1);
+  const lowering = ease(clamp(progress / 0.32, 0, 1));
+  const active = Boolean(state.helped);
+  const feetX = clamp(state.x || 550, 480, 850);
+  const feetY = Number.isFinite(state.assistY) ? state.assistY : GROUND;
+  let head;
+  let body;
+  if (!active) {
+    head = { x: 771, y: 231 };
+    body = 'M823 190 C791 191 805 209 803 220 Q797 240 771 231';
+  } else if (progress < 0.32) {
+    head = { x: mix(771, feetX - 27, lowering), y: mix(231, GROUND - 55, lowering) };
+    body = `M823 190 C778 192,${head.x + 43} ${head.y - 128},${head.x + 27} ${head.y - 13} Q${head.x + 18} ${head.y + 6},${head.x} ${head.y}`;
+  } else {
+    const raised = ease(clamp((progress - 0.32) / 0.68, 0, 1));
+    head = { x: feetX - 32, y: feetY - mix(55, 100, raised) };
+    body = `M823 190 C764 193,${feetX + 90} ${feetY + 42},${feetX + 25} ${feetY + 20} Q${feetX - 5} ${feetY + 16},${feetX - 7} ${feetY - 8} C${feetX - 9} ${feetY - 44},${head.x + 32} ${head.y + 11},${head.x} ${head.y}`;
   }
-  ctx.restore();
+  snakeStroke(ctx, body);
+  // Tres vueltas se quedan ancladas a la rama durante toda la ayuda.
+  snakeStroke(ctx, 'M852 191 C844 160 822 165 823 190 C822 220 803 222 800 195 C797 166 777 166 776 190 C776 215 757 211 759 185 C761 163 744 164 743 180');
   ctx.save();
   ctx.translate(head.x, head.y);
   const face = new Path2D('M13 -10 Q-4 -17 -22 -9 Q-36 -4 -30 5 Q-26 13 -8 10 L15 6Z');
-  paint(ctx, face, '#aa4241', [-35, -17, 53, 31], paper, 169, 0.8);
+  paint(ctx, face, '#ac4341', [-35, -17, 53, 31], paper, 169, 0.8);
   ellipse(ctx, -18, -6, 5.2, 5.8, '#eee1b3');
   ellipse(ctx, -19, -6.8, 2.1, 3.5, '#3e352b');
   ellipse(ctx, -3, -8, 4.4, 4.8, '#e5d6a6');
   ellipse(ctx, -4, -8.5, 1.7, 3.2, '#3e352b');
   line(ctx, 'M-30 5 Q-18 8 -11 5', '#56302d', 1);
-  if (!active) {
-    line(ctx, 'M-30 4 q-13 1 -16 9 M-42 11 l-7 -1 M-42 11 l-3 7', '#b24b55', 1.4);
-  }
+  line(ctx, 'M-30 4 q-13 1 -16 9 M-42 11 l-7 -1 M-42 11 l-3 7', '#b24b55', 1.4);
   ctx.restore();
 }
 
@@ -570,81 +683,140 @@ function garden(ctx, paper, dusk = false) {
   }
 }
 
+function tunnel(ctx, paper, geometry) {
+  const t = geometry.tunnel;
+  const r = geometry.rock;
+  rock(ctx, r.x, r.width, r.top, paper, 24);
+  // Un corte real del terreno: el suelo y el techo siguen el mismo perfil U.
+  const cut = new Path2D();
+  const count = 100;
+  for (let i = 0; i <= count; i += 1) {
+    const xx = t.x + t.width * i / count;
+    const yy = Math.max(GROUND, tunnelFloorAt(xx, t) - t.clearance);
+    if (i === 0) cut.moveTo(xx, yy);
+    else cut.lineTo(xx, yy);
+  }
+  for (let i = count; i >= 0; i -= 1) {
+    const xx = t.x + t.width * i / count;
+    cut.lineTo(xx, tunnelFloorAt(xx, t));
+  }
+  cut.closePath();
+  const dark = ctx.createLinearGradient(0, 520, 0, 668);
+  dark.addColorStop(0, '#40342e');
+  dark.addColorStop(0.45, '#49382f');
+  dark.addColorStop(1, '#382e29');
+  paint(ctx, cut, dark, [t.x, GROUND - t.clearance, t.width, t.depth + t.clearance], paper, 43, 1.5);
+  const lip = new Path2D();
+  for (let i = 0; i <= count; i += 1) {
+    const xx = t.x + t.width * i / count;
+    const yy = tunnelFloorAt(xx, t);
+    if (i === 0) lip.moveTo(xx, yy);
+    else lip.lineTo(xx, yy);
+  }
+  ctx.strokeStyle = '#b09a6538';
+  ctx.lineWidth = 3;
+  ctx.stroke(lip);
+}
+
+function loneCarrot(ctx, paper, planted) {
+  const pocket = new Path2D('M827 560 Q837 593 855 614 Q879 628 897 647 Q916 651 930 629 Q959 613 965 584 L976 560Z');
+  paint(ctx, pocket, '#35322d', [824, 557, 156, 95], paper, 181, 1.2);
+  ellipse(ctx, 809, 557, 7, 5, '#8d8776', -0.3);
+  if (planted) {
+    // Solo asoma una pequeña raíz: las hojas son la señal visible del huerto.
+    ellipse(ctx, 900, 558, 8, 5, '#dc985d');
+    line(ctx, 'M900 556 Q898 531 898 506 M898 536 Q882 522 879 510 M898 527 Q912 513 914 500 M897 518 Q882 502 882 493', '#4f6443', 2.1);
+    for (const [xx, yy, rot] of [[882, 512, -0.7], [878, 503, -0.6], [888, 520, -0.8], [910, 510, 0.8], [916, 500, 0.7], [901, 518, 0.2], [883, 493, -0.3], [898, 506, 0.2]]) {
+      ellipse(ctx, xx, yy, 4, 7, '#536944', rot);
+      ellipse(ctx, xx - 3, yy - 1, 3.7, 4.3, '#647b4b', rot);
+    }
+  }
+}
+
 function background(scene, paper, options = {}) {
-  const canvas = surface();
-  const ctx = canvas.getContext('2d');
+  const id = SCENES[scene]?.id || 'piedra';
+  const geometry = SCENE_GEOMETRY[scene] || {};
   const ending = options.ending;
   const title = options.title;
-  const sky = ctx.createLinearGradient(0, 0, 0, GROUND + 10);
+  const plateau = id === 'zanahoria' || id === 'conejo';
+  const skyCanvas = surface();
+  const skyCtx = skyCanvas.getContext('2d');
+  const sky = skyCtx.createLinearGradient(0, 0, 0, GROUND + 10);
   if (ending) {
     sky.addColorStop(0, '#28383c');
     sky.addColorStop(0.38, '#454248');
     sky.addColorStop(0.8, '#a74d5e');
     sky.addColorStop(1, '#ce6072');
-  } else if (scene === 0) {
+  } else if (id === 'piedra') {
     sky.addColorStop(0, '#accfd1');
     sky.addColorStop(0.35, '#b2c6cd');
     sky.addColorStop(0.76, '#c38f9f');
     sky.addColorStop(1, '#ce8096');
-  } else if (scene === 9) {
-    sky.addColorStop(0, '#829a9e');
-    sky.addColorStop(0.6, '#b9b2a7');
-    sky.addColorStop(1, '#d68d82');
+  } else if (plateau) {
+    sky.addColorStop(0, '#b5c7b7');
+    sky.addColorStop(0.48, '#cbcdb0');
+    sky.addColorStop(1, '#e1ce9d');
   } else {
     sky.addColorStop(0, '#9ec7cd');
     sky.addColorStop(0.55, '#acd1d1');
     sky.addColorStop(1, '#a8caca');
   }
-  ctx.fillStyle = sky;
-  ctx.fillRect(0, 0, WIDTH, HEIGHT);
-  if (scene === 0 || ending || scene === 9) {
-    const sunX = ending ? 508 : title ? 994 : scene === 9 ? 1017 : 321;
-    const sunY = ending ? 610 : scene === 9 ? 542 : 311;
-    const radius = ending ? 218 : title ? 117 : scene === 9 ? 163 : 113;
+  skyCtx.fillStyle = sky;
+  skyCtx.fillRect(0, 0, WIDTH, HEIGHT);
+  if (id === 'piedra' || ending || plateau) {
+    const sunX = ending ? 508 : title ? 994 : plateau ? 300 : 321;
+    const sunY = ending ? 610 : plateau ? 260 : 311;
+    const radius = ending ? 218 : title ? 117 : plateau ? 46 : 113;
     const disc = new Path2D();
     disc.ellipse(sunX, sunY, radius * 0.97, radius, -0.04, 0, Math.PI * 2);
-    paint(ctx, disc, CORAL, [sunX - radius, sunY - radius, radius * 2, radius * 2], paper, 12, 1.2);
+    paint(skyCtx, disc, CORAL, [sunX - radius, sunY - radius, radius * 2, radius * 2], paper, 12, 1.2);
   }
   if (ending) {
-    cloud(ctx, 240, 144, 233, 39, paper, '#a4bdc0');
-    cloud(ctx, 1060, 99, 116, 21, paper, '#adc4c5');
-  } else {
-    cloud(ctx, title ? 853 : 810, 142, 272, 57, paper);
-    cloud(ctx, title ? 1130 : 1034, 236, 151, 41, paper);
-    if (scene === 7) cloud(ctx, 163, 152, 191, 44, paper);
+    cloud(skyCtx, 240, 144, 233, 39, paper, '#a4bdc0');
+    cloud(skyCtx, 1060, 99, 116, 21, paper, '#adc4c5');
+  } else if (!plateau && id !== 'pared' && id !== 'serpiente') {
+    cloud(skyCtx, title ? 853 : 810, 142, 272, 57, paper);
+    cloud(skyCtx, title ? 1130 : 1034, 236, 151, 41, paper);
+    if (id === 'juncos') cloud(skyCtx, 163, 152, 191, 44, paper);
   }
-  ground(ctx, scene, paper, { ending });
-  const geometry = SCENE_GEOMETRY[scene] || {};
-  if (scene === 0 || scene === 1 || scene === 3) {
-    const r = geometry.rock || ({ 0: { x: 610, width: 110, top: 470 }, 1: { x: 670, width: 130, top: 350 }, 3: { x: 710, width: 155, top: 318 } })[scene];
+  skyCtx.save();
+  skyCtx.globalAlpha = 0.32;
+  skyCtx.fillStyle = paper;
+  skyCtx.fillRect(0, 0, WIDTH, HEIGHT);
+  skyCtx.restore();
+  const width = geometry.width || WIDTH;
+  const top = id === 'pared' ? -1300 : id === 'serpiente' ? -340 : 0;
+  const world = surface(width, HEIGHT - top);
+  const ctx = world.getContext('2d');
+  ctx.translate(0, -top);
+  ground(ctx, scene, paper, { ending, plateau, width });
+  if (['piedra', 'tortuga', 'elefante'].includes(id)) {
+    const r = geometry.rock;
     rock(ctx, r.x, r.width, r.top, paper, 21 + scene);
   }
-  if (scene === 0) bird(ctx, 814, GROUND, paper);
-  if (scene === 2) {
-    // El zorro conoce un paso bajo la roca, visible como un corte de la tierra.
-    const r = geometry.tunnel || { x: 620, width: 200, ceiling: 516, top: 305 };
-    rock(ctx, r.x + 22, r.width - 44, r.top, paper, 24, r.ceiling);
-    const tunnel = new Path2D(`M${r.x - 24} 560 Q${r.x - 14} 545,${r.x - 7} ${r.ceiling + 12} Q${r.x - 1} ${r.ceiling},${r.x + 15} ${r.ceiling} L${r.x + r.width - 15} ${r.ceiling} Q${r.x + r.width + 9} ${r.ceiling},${r.x + r.width + 22} 560 Q${r.x + r.width + 14} 589,${r.x + 157} 601 Q${r.x + 96} 634,${r.x + 24} 601 Q${r.x - 16} 589,${r.x - 24} 560Z`);
-    paint(ctx, tunnel, '#484035', [r.x - 25, r.ceiling, r.width + 50, 122], paper, 43, 1.5);
-    line(ctx, `M${r.x - 24} 560 Q${r.x - 13} 544,${r.x - 7} ${r.ceiling + 12} Q${r.x - 1} ${r.ceiling},${r.x + 15} ${r.ceiling} L${r.x + r.width - 15} ${r.ceiling} Q${r.x + r.width + 9} ${r.ceiling},${r.x + r.width + 22} 560`, '#827a55', 7);
-    line(ctx, `M${r.x - 3} 561 Q${r.x + 109} 579,${r.x + r.width + 8} 559`, '#272e2726', 2);
+  if (id === 'piedra') bird(ctx, 814, GROUND, paper);
+  if (id === 'zorro') tunnel(ctx, paper, geometry);
+  if (['charco', 'jirafa', 'cocodrilo'].includes(id)) water(ctx, geometry.gap.left, geometry.gap.right, paper, id === 'charco' ? 'puddle' : 'river');
+  if (id === 'juncos') reeds(ctx, paper, false, geometry.reeds);
+  if (id === 'pared' || id === 'serpiente') {
+    cliff(ctx, paper, geometry.wall.x, geometry.wall.top);
+    if (id === 'serpiente') snakeTree(ctx, paper);
   }
-  if (scene >= 4 && scene <= 6) {
-    const fallback = scene === 4 ? { x: 550, end: 700 } : scene === 5 ? { x: 550, end: 860 } : { x: 530, end: 900 };
-    const gap = geometry.gap || fallback;
-    water(ctx, gap.left ?? fallback.x, gap.right ?? fallback.end, paper, scene === 4 ? 'puddle' : 'river');
-  }
-  if (scene === 7) reeds(ctx, paper);
-  if (scene === 8) cliff(ctx, paper);
-  if (scene === 9) garden(ctx, paper, ending);
-  const plants = scene === 0 ? [[457, 0.65], [921, 0.48], [1173, 0.36]] : [[83, 0.6], [1055, 0.48], [1154, 0.25]];
+  if (plateau && !ending) loneCarrot(ctx, paper, id === 'zanahoria');
+  if (ending) garden(ctx, paper, true);
+  const plants = id === 'pared' || id === 'serpiente' ? [[83, 0.6], [830, 0.4]] : id === 'piedra' ? [[457, 0.65], [921, 0.48], [1173, 0.36]] : id === 'juncos' ? [[83, 0.6], [2256, 0.48], [2430, 0.25]] : plateau ? [] : [[83, 0.6], [1055, 0.48], [1154, 0.25]];
   for (const [x, size] of plants) grass(ctx, x, GROUND, size, ending ? '#5f6b4f' : '#73774e');
   ctx.save();
   ctx.globalAlpha = 0.32;
   ctx.fillStyle = paper;
-  ctx.fillRect(0, 0, WIDTH, HEIGHT);
+  ctx.fillRect(0, top, width, HEIGHT - top);
   ctx.restore();
-  return canvas;
+  let foreground;
+  if (id === 'juncos') {
+    foreground = surface(width, HEIGHT);
+    reeds(foreground.getContext('2d'), paper, true, geometry.reeds);
+  }
+  return { sky: skyCanvas, world, top, foreground };
 }
 
 function drawMap(ctx, state, paper) {
@@ -661,12 +833,13 @@ function drawMap(ctx, state, paper) {
   cloud(ctx, 231, 278, 102, 20, paper, '#cedbd7');
   cloud(ctx, 328, 241, 45, 12, paper, '#cedbd7');
   cloud(ctx, 1107, 182, 121, 22, paper, '#c1d1cf');
-  const earth = new Path2D('M0 553 Q216 548 398 552 Q600 551 825 542 Q996 539 1110 541 L1110 720 L0 720Z');
+  const earth = new Path2D('M0 553 Q216 548 398 552 Q600 551 825 542 Q996 539 1280 541 L1280 720 L0 720Z');
   const soil = ctx.createLinearGradient(0, 541, 0, 720);
   soil.addColorStop(0, '#7c6953');
   soil.addColorStop(1, '#504f3c');
   paint(ctx, earth, soil, [0, 540, WIDTH, 180], paper, 204, 1.8);
-  // Un paisaje continuo, como el gran desplegable al final del cuento.
+  const centers = SCENES.map((_, index) => WIDTH * (0.04 + 0.92 * (index + 0.5) / SCENES.length));
+  const route = SCENES.map((scene, index) => [scene.id === 'serpiente' ? centers[index - 1] + 15 : centers[index], ['zanahoria', 'conejo'].includes(scene.id) ? 355 : 550]);
   const mini = (x, y, scale, draw) => {
     ctx.save();
     ctx.translate(x, y);
@@ -674,54 +847,78 @@ function drawMap(ctx, state, paper) {
     draw();
     ctx.restore();
   };
-  mini(110, 551, 0.22, () => {
-    rock(ctx, -45, 90, -70, paper, 20, 0);
-    bird(ctx, 85, 0, paper);
-  });
-  mini(228, 551, 0.27, () => {
-    turtle(ctx, -42, 0, paper);
-    rock(ctx, 4, 105, -154, paper, 21, 0);
-  });
-  mini(346, 552, 0.28, () => {
-    rock(ctx, -40, 110, -160, paper, 22, 0);
-    fox(ctx, 15, -160, paper);
-    line(ctx, 'M-78 4 Q0 52 82 4', '#302f2b', 12);
-  });
-  mini(464, 551, 0.28, () => {
-    elephant(ctx, -48, 0, paper, { helped: false });
-    rock(ctx, 97, 130, -210, paper, 23, 0);
-  });
-  shape(ctx, 'M563 550 Q577 582 600 552Z', '#65909d');
-  mini(565, 399, 0.27, () => giraffe(ctx, paper, 0));
-  shape(ctx, 'M717 550 Q728 578 754 548Z', '#6a97a2');
-  shape(ctx, 'M770 546 Q786 583 866 544Z', '#60899a');
-  mini(655, 419, 0.23, () => crocodile(ctx, paper, 1));
-  mini(761, 403, 0.25, () => reeds(ctx, paper));
-  const wall = new Path2D('M1111 359 Q1081 360 1083 399 Q1092 462 1095 541 L1093 720 L1280 720 L1280 355 Q1198 350 1111 359Z');
-  const cliffFill = ctx.createLinearGradient(1088, 356, 1250, 720);
-  cliffFill.addColorStop(0, '#a39983');
-  cliffFill.addColorStop(0.65, '#8a8069');
-  cliffFill.addColorStop(1, '#6b6552');
-  paint(ctx, wall, cliffFill, [1078, 351, 205, 370], paper, 206, 1.7);
-  line(ctx, 'M1112 370 l-6 12 5 11 -1 20 M1105 479 l12 10 -6 15', '#615f4e42', 1.6);
-  mini(884, 281, 0.26, () => snake(ctx, paper, { helped: false }));
-  mini(1172, 357, 0.39, () => rabbit(ctx, 0, 0, paper, { brown: true, facing: -1 }));
-  mini(1220, 357, 0.35, () => carrot(ctx, 0, 8, paper, 0.3));
-  const route = [
-    [78, 552], [190, 552], [306, 553], [410, 551], [543, 552],
-    [652, 551], [767, 548], [887, 543], [1012, 541], [1138, 357],
-  ];
-  const current = clamp(state.scene || 0, 0, 9);
-  const [rx, ry] = route[current];
-  const fraction = state.mode === 'ending' ? 1 : clamp((state.x || 0) / WIDTH, 0, 0.75);
-  const next = route[Math.min(current + 1, 9)];
-  const cx = current < 8 ? mix(rx, next[0], fraction) : rx;
+  // Los doce hitos comparten un paisaje; cada ilustración cae bajo su rótulo.
+  for (let index = 0; index < SCENES.length; index += 1) {
+    const x = centers[index];
+    const id = SCENES[index].id;
+    if (id === 'piedra') mini(x, 551, 0.26, () => {
+      rock(ctx, -45, 90, -70, paper, 20, 0);
+      bird(ctx, 74, 0, paper);
+    });
+    if (id === 'tortuga') mini(x, 551, 0.28, () => {
+      turtle(ctx, -62, 0, paper);
+      rock(ctx, -3, 105, -154, paper, 21, 0);
+    });
+    if (id === 'zorro') mini(x, 552, 0.28, () => {
+      rock(ctx, -40, 110, -160, paper, 22, 0);
+      fox(ctx, -55, 0, paper);
+      line(ctx, 'M-100 4 Q0 70 100 4', '#302f2b', 18);
+    });
+    if (id === 'elefante') mini(x, 551, 0.24, () => {
+      elephant(ctx, -47, 0, paper, { revealProgress: 1 });
+      rock(ctx, 105, 130, -210, paper, 23, 0);
+    });
+    if (id === 'charco') shape(ctx, `M${x - 21} 550 Q${x} 585 ${x + 21} 551Z`, '#65909d');
+    if (id === 'jirafa') {
+      shape(ctx, `M${x - 40} 550 Q${x - 20} 584 ${x + 3} 551Z`, '#6a97a2');
+      mini(x - 230, 421, 0.23, () => giraffe(ctx, paper, 0));
+    }
+    if (id === 'cocodrilo') {
+      shape(ctx, `M${x - 40} 550 Q${x} 590 ${x + 45} 548Z`, '#60899a');
+      mini(x - 166, 420, 0.23, () => crocodile(ctx, paper, 1));
+    }
+    if (id === 'juncos') mini(x - 150, 410, 0.25, () => {
+      reeds(ctx, paper, false, { left: 380, right: 820 });
+      reeds(ctx, paper, true, { left: 380, right: 820 });
+    });
+    if (id === 'pared') {
+      // La pared y la serpiente son dos momentos ante la misma montaña.
+      const side = x + 40;
+      const wall = new Path2D(`M${side + 20} 355 Q${side - 4} 354 ${side + 1} 389 L${side + 8} 720 L1280 720 L1280 355Z`);
+      const fill = ctx.createLinearGradient(side, 355, 1280, 720);
+      fill.addColorStop(0, '#aaa18e');
+      fill.addColorStop(1, '#797360');
+      paint(ctx, wall, fill, [side - 4, 351, 1284 - side, 370], paper, 206, 1.7);
+    }
+    if (id === 'serpiente') {
+      const side = centers[SCENES.findIndex((scene) => scene.id === 'pared')] + 40;
+      mini(side - 204, 387, 0.24, () => {
+        snakeTree(ctx, paper);
+        snake(ctx, paper, { helped: false });
+      });
+    }
+    if (id === 'zanahoria') mini(x, 355, 0.46, () => {
+      shape(ctx, 'M-35 0 Q-20 45 0 46 Q25 35 35 0Z', '#38362f');
+      carrot(ctx, 0, -8, paper, 0, true);
+    });
+    if (id === 'conejo') mini(x, 355, 0.42, () => {
+      rabbit(ctx, 0, 0, paper, { brown: true, facing: -1 });
+      carrot(ctx, -29, -37, paper, -1.2, true);
+    });
+  }
+  const current = clamp(state.scene || 0, 0, SCENES.length - 1);
+  const [rx, routeY] = route[current];
+  const climbing = SCENES[current].id === 'serpiente';
+  const ry = climbing ? mix(550, 355, ease(clamp(((state.helpProgress || 0) - 0.32) / 0.68, 0, 1))) : routeY;
+  const width = SCENE_GEOMETRY[current].width || WIDTH;
+  const fraction = clamp((state.x || 0) / width, 0, 0.72);
+  const next = route[Math.min(current + 1, SCENES.length - 1)];
+  const cx = !climbing && current < SCENES.length - 1 ? mix(rx, next[0], fraction * 0.7) : rx;
   ctx.save();
   ctx.globalAlpha = 0.15;
   ellipse(ctx, cx, ry - 20, 35, 36, '#fff3cc');
   ctx.restore();
-  rabbit(ctx, state.mode === 'ending' ? 1135 : cx, state.mode === 'ending' ? 357 : ry, paper, { scale: 0.45 });
-  // Los pliegues recuerdan el papel del panorama, sin dividirlo en tarjetas.
+  rabbit(ctx, state.mode === 'ending' || SCENES[current].id === 'conejo' ? centers.at(-1) - 29 : cx, state.mode === 'ending' ? 355 : ry, paper, { scale: 0.4 });
   for (const x of [256, 512, 768, 1024]) {
     const fold = ctx.createLinearGradient(x - 10, 0, x + 9, 0);
     fold.addColorStop(0, '#182f3200');
@@ -779,11 +976,13 @@ export function createRenderer(canvas) {
 
   function render(state, { reducedMotion = false, map = false } = {}) {
     ctx.setTransform(scaleX, 0, 0, scaleX, 0, 0);
-    const scene = clamp(state.scene || 0, 0, 9);
+    const scene = clamp(state.scene || 0, 0, SCENES.length - 1);
+    const id = SCENES[scene].id;
     const time = reducedMotion ? 0 : state.time || 0;
+    const ending = state.mode === 'ending';
+    const plateau = id === 'zanahoria' || id === 'conejo';
     if (skyExtension > 0) {
-      ctx.fillStyle = map ? '#263c43' : state.mode === 'ending' ? '#28383c'
-        : scene === 0 ? '#accfd1' : scene === 9 ? '#829a9e' : '#9ec7cd';
+      ctx.fillStyle = map ? '#263c43' : ending ? '#28383c' : id === 'piedra' ? '#accfd1' : plateau ? '#b5c7b7' : '#9ec7cd';
       ctx.fillRect(0, 0, WIDTH, skyExtension + 1);
       ctx.save();
       ctx.globalAlpha = 0.32;
@@ -793,8 +992,7 @@ export function createRenderer(canvas) {
       ctx.translate(0, skyExtension);
     }
     if (map) {
-      // El paisaje estático se conserva; el pequeño conejo marca el progreso.
-      const key = `${scene}:${state.mode}:${Math.round((state.x || 0) / 8)}`;
+      const key = `${scene}:${state.mode}:${Math.round((state.x || 0) / 8)}:${Math.round((state.helpProgress || 0) * 32)}`;
       if (!mapCache || mapCache.key !== key) {
         const bitmap = surface();
         drawMap(bitmap.getContext('2d'), state, paper);
@@ -803,12 +1001,14 @@ export function createRenderer(canvas) {
       ctx.drawImage(mapCache.bitmap, 0, 0);
       return;
     }
-    const key = `${scene}:${state.mode === 'ending'}:${state.mode === 'title'}`;
-    if (!scenes.has(key)) {
-      scenes.set(key, background(scene, paper, { ending: state.mode === 'ending', title: state.mode === 'title' }));
-    }
-    ctx.drawImage(scenes.get(key), 0, 0);
-    if (scene === 1) {
+    const key = `${id}:${ending}:${state.mode === 'title'}`;
+    if (!scenes.has(key)) scenes.set(key, background(scene, paper, { ending, title: state.mode === 'title' }));
+    const layer = scenes.get(key);
+    ctx.drawImage(layer.sky, 0, 0);
+    ctx.save();
+    ctx.translate(ending ? 0 : -(state.cameraX || 0), ending ? 0 : -(state.cameraY || 0));
+    ctx.drawImage(layer.world, 0, layer.top);
+    if (!ending && id === 'tortuga') {
       const p = ease(clamp(state.helpProgress || 0, 0, 1));
       const tx = state.helped ? clamp(state.x, 450, 650) : 515;
       ctx.save();
@@ -817,36 +1017,43 @@ export function createRenderer(canvas) {
       turtle(ctx, 0, 0, paper, state.helped ? 1 : 0, time);
       ctx.restore();
     }
-    if (scene === 2) fox(ctx, 725, 306, paper, state.helped);
-    if (scene === 3) elephant(ctx, 569, GROUND, paper, state);
-    if (scene === 5) giraffe(ctx, paper, state.helpProgress || 0);
-    if (scene === 6) crocodile(ctx, paper, state.helpProgress || 0, time);
-    if (scene === 8) snake(ctx, paper, state);
-    if (scene === 9) {
-      rabbit(ctx, state.mode === 'ending' ? 956 : 930, GROUND, paper, { brown: true, facing: state.mode === 'ending' ? 1 : -1, time });
+    if (!ending && id === 'zorro') {
+      if (state.helped) {
+        ctx.save();
+        ctx.translate(568, 393);
+        ctx.rotate(Math.PI - 0.13);
+        fox(ctx, 0, 0, paper, true);
+        ctx.restore();
+        line(ctx, 'M595 387 Q633 350 623 307', '#562e2d', 8);
+      } else fox(ctx, 725, 306, paper, false);
     }
-    if (state.grounded && Math.abs(state.vx || 0) > 30 && !reducedMotion) {
+    if (!ending && id === 'elefante') elephant(ctx, 569, GROUND, paper, state);
+    if (!ending && id === 'jirafa') giraffe(ctx, paper, state.helpProgress || 0);
+    if (!ending && id === 'cocodrilo') crocodile(ctx, paper, state.helpProgress || 0, time);
+    if (!ending && id === 'serpiente') snake(ctx, paper, state);
+    if (ending || id === 'conejo') {
+      const friendX = ending ? 956 : state.friendGreeted ? Math.min(1185, (state.x || 100) + 85) : 930;
+      rabbit(ctx, friendX, GROUND, paper, { brown: true, facing: ending || state.friendGreeted ? 1 : -1, time, moving: state.friendGreeted && !reducedMotion ? state.vx : 0 });
+      if (!ending) carrot(ctx, friendX - 30, GROUND - 37, paper, -1.2, true);
+    }
+    if (!state.hiddenInReeds && state.grounded && Math.abs(state.vx || 0) > 30 && !reducedMotion) {
       ctx.save();
       ctx.globalAlpha = 0.18;
       ellipse(ctx, state.x - (state.facing || 1) * 27, state.y - 2, 14, 3.5, '#e3d2ab');
       ctx.restore();
     }
-    const ending = state.mode === 'ending';
-    rabbit(ctx, ending ? 825 : state.x ?? 120, ending ? GROUND : state.y ?? GROUND, paper, {
-      facing: ending ? 1 : state.facing || 1,
-      moving: reducedMotion || ending ? 0 : state.vx || 0,
-      ducking: state.ducking,
-      time,
-      airborne: !state.grounded,
-    });
-    if (scene === 7) reeds(ctx, paper, true);
-    if (scene === 8 && state.x > 870 && state.y >= GROUND - 2) {
-      // Protección gráfica si una transición coloca al conejo detrás del corte.
-      cliff(ctx, paper);
+    if (!state.hiddenInReeds || ending) {
+      rabbit(ctx, ending ? 825 : state.x ?? 120, ending ? GROUND : state.y ?? GROUND, paper, {
+        facing: ending ? 1 : state.facing || 1,
+        moving: reducedMotion || ending ? 0 : state.vx || 0,
+        ducking: state.ducking,
+        time,
+        airborne: !state.grounded,
+      });
     }
-    if (!reducedMotion && state.helped) {
-      assistance(ctx, state.x, state.y - 33, state.helpProgress || 0);
-    }
+    if (layer.foreground && !ending) ctx.drawImage(layer.foreground, 0, 0);
+    if (!reducedMotion && state.helped && !state.hiddenInReeds) assistance(ctx, state.x, state.y - 33, state.helpProgress || 0);
+    ctx.restore();
   }
 
   resize();

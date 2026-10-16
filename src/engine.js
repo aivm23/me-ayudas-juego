@@ -4,16 +4,18 @@ export const HEIGHT = 720;
 export const GROUND = 560;
 
 export const SCENES = Object.freeze([
-  { id: 'piedra', title: 'Una piedra en el camino', description: 'El conejito quiere llegar al huerto de su amigo.', task: 'Salta la piedra y sigue el camino.', helper: null, kind: 'rock', skyTop: '#a9d4d6', skyBottom: '#ce9db1', groundColor: '#767347' },
-  { id: 'tortuga', title: '¿Me ayudas, tortuga?', description: 'Una roca muy alta. Una amiga con un gran caparazón.', task: 'Pide ayuda y salta desde el caparazón.', helper: 'tortuga', kind: 'lift-rock', skyTop: '#a9d4d6', skyBottom: '#b7d6d3', groundColor: '#767347' },
-  { id: 'zorro', title: 'El pasadizo del zorro', description: 'El zorro conoce un pequeño paso bajo la roca.', task: 'Pide ayuda y pasa agachado.', helper: 'zorro', kind: 'tunnel', skyTop: '#a9d4d6', skyBottom: '#b7d6d3', groundColor: '#767347' },
-  { id: 'elefante', title: 'Una trompa muy amable', description: 'El elefante puede ayudarte a subir.', task: 'Pide ayuda y avanza sobre la gran roca.', helper: 'elefante', kind: 'lift-rock', skyTop: '#a9d4d6', skyBottom: '#b7d6d3', groundColor: '#767347' },
-  { id: 'charco', title: '¡Un salto al otro lado!', description: 'Un pequeño charco corta el camino.', task: 'Acércate y salta el charco.', helper: null, kind: 'gap', skyTop: '#a9d4d6', skyBottom: '#b7d6d3', groundColor: '#7c794e' },
-  { id: 'jirafa', title: 'El puente de la jirafa', description: 'El río es ancho. La jirafa tiene una idea.', task: 'Pide ayuda y cruza su puente.', helper: 'jirafa', kind: 'bridge', skyTop: '#a9d4d6', skyBottom: '#b7d6d3', groundColor: '#7c794e' },
-  { id: 'cocodrilo', title: 'Un amigo dormilón', description: 'El cocodrilo duerme junto al río.', task: 'Despiértalo con espacio y cruza con calma.', helper: 'cocodrilo', kind: 'bridge', skyTop: '#a9d4d6', skyBottom: '#b7d6d3', groundColor: '#7c794e' },
-  { id: 'juncos', title: 'Entre los juncos', description: 'El camino continúa bajo los juncos.', task: 'Mantén la flecha abajo mientras avanzas.', helper: null, kind: 'reeds', skyTop: '#a9d4d6', skyBottom: '#b7d6d3', groundColor: '#85804e' },
-  { id: 'serpiente', title: 'La escalera de la serpiente', description: 'Falta una última pared antes del huerto.', task: 'Pide ayuda a la serpiente y sube.', helper: 'serpiente', kind: 'wall', skyTop: '#a9d4d6', skyBottom: '#d5c79d', groundColor: '#888052' },
-  { id: 'huerto', title: 'Por fin, el huerto', description: 'Tu amigo te espera entre las zanahorias.', task: 'Acércate a tu amigo y pulsa espacio.', helper: 'conejo', kind: 'garden', skyTop: '#829a9e', skyBottom: '#d68d67', groundColor: '#74705f' },
+  { id: 'piedra', mapLabel: 'La piedra', title: 'Una piedra en el camino', description: 'El conejito quiere llegar al huerto de su amigo.', task: 'Salta la piedra y sigue el camino.', helper: null, kind: 'rock', skyTop: '#a9d4d6', skyBottom: '#ce9db1', groundColor: '#767347' },
+  { id: 'tortuga', mapLabel: 'La tortuga', title: '¿Me ayudas, tortuga?', description: 'Una roca muy alta. Una amiga con un gran caparazón.', task: 'Pide ayuda y salta desde el caparazón.', helper: 'tortuga', kind: 'lift-rock', skyTop: '#a9d4d6', skyBottom: '#b7d6d3', groundColor: '#767347' },
+  { id: 'zorro', mapLabel: 'El zorro', title: 'El pasadizo del zorro', description: 'El zorro conoce un paso bajo la roca.', task: 'Pide ayuda y mantén ↓ mientras cruzas el túnel.', helper: 'zorro', kind: 'tunnel', skyTop: '#a9d4d6', skyBottom: '#b7d6d3', groundColor: '#767347' },
+  { id: 'elefante', mapLabel: 'El elefante', title: '¿Una piedra o un elefante?', description: 'Esa gran silueta es un elefante de espaldas.', task: 'Llámalo con espacio y vuelve a pulsar para pedir ayuda.', helper: 'elefante', kind: 'lift-rock', skyTop: '#a9d4d6', skyBottom: '#b7d6d3', groundColor: '#767347' },
+  { id: 'charco', mapLabel: 'El charco', title: '¡Un salto al otro lado!', description: 'Un pequeño charco corta el camino.', task: 'Acércate y salta el charco.', helper: null, kind: 'gap', skyTop: '#a9d4d6', skyBottom: '#b7d6d3', groundColor: '#7c794e' },
+  { id: 'jirafa', mapLabel: 'La jirafa', title: 'El puente de la jirafa', description: 'La jirafa te ve desde la otra orilla del río.', task: 'Llámala y cruza sobre su cuello.', helper: 'jirafa', kind: 'bridge', skyTop: '#a9d4d6', skyBottom: '#b7d6d3', groundColor: '#7c794e' },
+  { id: 'cocodrilo', mapLabel: 'El cocodrilo', title: 'Un amigo dormilón', description: 'El cocodrilo duerme junto al río.', task: 'Despiértalo con espacio y cruza con calma.', helper: 'cocodrilo', kind: 'bridge', skyTop: '#a9d4d6', skyBottom: '#b7d6d3', groundColor: '#7c794e' },
+  { id: 'juncos', mapLabel: 'Los juncos', title: 'Entre los juncos', description: 'Un mar de juncos oculta el camino.', task: 'Sigue con → entre los juncos; con ← puedes volver.', helper: null, kind: 'reeds', skyTop: '#a9d4d6', skyBottom: '#b7d6d3', groundColor: '#85804e' },
+  { id: 'pared', mapLabel: 'La pared', title: 'Una montaña altísima', description: 'La pared de la montaña se pierde en el cielo.', task: 'Acércate a la pared y pulsa espacio para mirar arriba.', helper: null, kind: 'mountain', skyTop: '#a9d4d6', skyBottom: '#d5c79d', groundColor: '#888052' },
+  { id: 'serpiente', mapLabel: 'La serpiente', title: 'La escalera de la serpiente', description: 'Una serpiente espera enrollada en un árbol a media montaña.', task: 'Pide ayuda a la serpiente y sube hasta la cima.', helper: 'serpiente', kind: 'wall', skyTop: '#a9d4d6', skyBottom: '#d5c79d', groundColor: '#888052' },
+  { id: 'zanahoria', mapLabel: 'Una zanahoria', title: 'Una zanahoria en la cima', description: 'Una sola zanahoria asoma en la tierra de la meseta.', task: 'Acércate a la zanahoria y sigue el camino.', helper: null, kind: 'plateau', skyTop: '#e2c15f', skyBottom: '#eed17a', groundColor: '#74705f' },
+  { id: 'conejo', mapLabel: 'El conejo marrón', title: '¡Hola, amigo!', description: 'El conejo marrón come una zanahoria en la meseta.', task: 'Saluda con espacio y caminad juntos hasta el huerto.', helper: 'conejo', kind: 'friend', skyTop: '#e2c15f', skyBottom: '#eed17a', groundColor: '#74705f' },
 ]);
 
 // Shared with the illustration: left edges, widths, and absolute top surfaces.
@@ -22,24 +24,40 @@ export const SCENES = Object.freeze([
 export const SCENE_GEOMETRY = Object.freeze([
   { rock: { x: 610, width: 110, top: 470 } },
   { helperX: 500, rock: { x: 670, width: 130, top: 350 }, liftY: 455, liftLeft: 430, liftRight: 670 },
-  { helperX: 470, tunnel: { x: 620, width: 200, top: 305, ceiling: 516 } },
+  { helperX: 470, tunnel: { x: 500, width: 440, depth: 100, clearance: 52, top: 305 }, rock: { x: 620, width: 200, top: 305 } },
   { helperX: 490, rock: { x: 710, width: 155, top: 318 }, liftY: 318, liftLeft: 420, liftRight: 710 },
   { gap: { left: 550, right: 700 } },
   { helperX: 470, gap: { left: 550, right: 860 } },
   { helperX: 470, gap: { left: 530, right: 900 } },
-  { tunnel: { x: 470, width: 460, top: 390, ceiling: 516 } },
-  { helperX: 550, wall: { x: 850, width: 430, top: 300 }, liftY: 300, liftLeft: 480, liftRight: 850 },
+  { width: 2560, reeds: { left: 380, right: 2160 } },
+  { wall: { x: 850, width: 430, top: -1200 }, lookFromX: 720 },
+  { helperX: 550, wall: { x: 850, width: 430, top: -220 }, liftY: -220, liftLeft: 480, liftRight: 850, tree: { x: 860, y: 190 } },
+  { carrotX: 900 },
   { friendX: 930 },
 ]);
 
-const RADIUS = 24;
-const HEIGHT_STANDING = 66;
-const HEIGHT_DUCKING = 36;
-const SPEED = 270;
+export const SCENE_IDS = Object.freeze(Object.fromEntries(SCENES.map((scene, index) => [scene.id, index])));
+export const RADIUS = 24;
+export const HEIGHT_STANDING = 66;
+export const HEIGHT_DUCKING = 36;
+export const SPEED = 270;
 const GRAVITY = 1400;
 const JUMP_SPEED = 610;
 const EPSILON = 0.001;
-const EXIT = WIDTH - 45;
+export const ELEPHANT_REVEAL_DURATION = 0.65;
+export const SNAKE_HELP_DURATION = 3;
+export const SNAKE_LOWERING_PROGRESS = 0.32;
+const clamp = (value, low, high) => Math.min(high, Math.max(low, value));
+const eased = progress => progress * progress * (3 - 2 * progress);
+
+export const sceneId = state => SCENES[state.scene].id;
+export const currentGeometry = state => SCENE_GEOMETRY[state.scene];
+export const sceneWidth = state => currentGeometry(state).width ?? WIDTH;
+
+export function tunnelFloorAt(x, tunnel) {
+  const progress = clamp((x - tunnel.x) / tunnel.width, 0, 1);
+  return GROUND + tunnel.depth * Math.sin(Math.PI * progress);
+}
 
 export function createGame() {
   return {
@@ -52,6 +70,8 @@ export function createGame() {
     lifting: false, assistY: GROUND, walkTime: 0, solved: false,
     crossedTop: false, tunnelEntered: false, jumpOriginX: null,
     jumped: false, resetCount: 0, toast: '', toastTimer: 0,
+    elephantRevealed: false, revealProgress: 0, hiddenInReeds: false,
+    cameraX: 0, cameraY: 0, snakePhase: 'coiled', friendGreeted: false,
   };
 }
 
@@ -95,15 +115,11 @@ function obstacles(state, geometry) {
   const result = [];
   if (geometry.rock) result.push({ ...geometry.rock, bottom: GROUND });
   if (geometry.wall) result.push({ ...geometry.wall, bottom: GROUND + HEIGHT });
-  if (geometry.tunnel) {
-    const locked = state.scene === 2 && !state.helped;
-    result.push({ ...geometry.tunnel, bottom: locked ? GROUND : geometry.tunnel.ceiling });
-  }
   return result;
 }
 
 function bridgeReady(state) {
-  return (state.scene === 5 || state.scene === 6) && state.helped;
+  return SCENES[state.scene].kind === 'bridge' && state.helped;
 }
 
 function onGroundAt(state, geometry, x) {
@@ -115,23 +131,36 @@ function onGroundAt(state, geometry, x) {
 function help(state, geometry) {
   if (geometry.helperX === undefined || !SCENES[state.scene].helper) return false;
   if (Math.abs(state.x - geometry.helperX) > 105 || !state.grounded) return false;
+  const id = sceneId(state);
+  if (id === 'elefante') {
+    if (!state.elephantRevealed) {
+      state.elephantRevealed = true;
+      state.revealProgress = 0;
+      say(state, '¡Es un elefante! Espera a que se dé la vuelta.', 0.8);
+      return true;
+    }
+    // Each press is consumed during the turn, so it cannot also start a jump
+    // or accidentally combine the reveal and the lift into one action.
+    if (state.revealProgress < 1) return true;
+  }
   const canRelift = geometry.liftY !== undefined && state.y > GROUND - 10;
   if (state.helped && !canRelift) return false;
   state.helped = true;
   state.helpProgress = 0;
   state.celebration = 0.7;
-  state.lifting = geometry.liftY !== undefined;
+  state.lifting = geometry.liftY !== undefined && id !== 'serpiente';
+  if (id === 'serpiente') state.snakePhase = 'lowering';
   state.assistY = GROUND;
   state.vy = 0;
   const messages = {
-    1: '¡Gracias, tortuga! Su caparazón te acerca a la roca.',
-    2: '¡Gracias, zorro! Ahora puedes pasar agachado.',
-    3: '¡Gracias, elefante! Su trompa te lleva hacia arriba.',
-    5: '¡Gracias, jirafa! Ya puedes cruzar el río.',
-    6: '¡Buenos días, cocodrilo! Ya puedes cruzar.',
-    8: '¡Gracias, serpiente! Sube contigo hasta la pared.',
+    tortuga: '¡Gracias, tortuga! Su caparazón te acerca a la roca.',
+    zorro: '¡Gracias, zorro! Ahora puedes pasar bajo la roca.',
+    elefante: '¡Gracias, elefante! Su trompa te lleva hacia arriba.',
+    jirafa: '¡Gracias, jirafa! Ya puedes cruzar el río.',
+    cocodrilo: '¡Buenos días, cocodrilo! Ya puedes cruzar.',
+    serpiente: '¡Gracias, serpiente! Baja su cabeza para ayudarte a subir.',
   };
-  say(state, messages[state.scene] ?? '¡Gracias por ayudarme!', 2);
+  say(state, messages[id] ?? '¡Gracias por ayudarme!', 2);
   return true;
 }
 
@@ -157,18 +186,19 @@ function markSolved(state) {
 }
 
 function checkChallenge(state, geometry, input) {
+  const id = sceneId(state);
   const rock = geometry.rock ?? geometry.wall;
   if (rock && overlaps(state.x, rock) && state.y <= rock.top + 1) {
     state.crossedTop = true;
   }
-  if (geometry.rock && state.crossedTop && state.x > rock.x + rock.width + RADIUS
-    && (state.scene === 0 || state.helped)) markSolved(state);
-  if (geometry.wall && state.helped && state.crossedTop && state.y <= rock.top + 1
+  if (geometry.rock && !geometry.tunnel && state.crossedTop && state.x > rock.x + rock.width + RADIUS
+    && (id === 'piedra' || state.helped)) markSolved(state);
+  if (id === 'serpiente' && state.helped && state.crossedTop && state.y <= rock.top + 1
     && state.x > rock.x + 72) markSolved(state);
   if (geometry.tunnel) {
     const tunnel = geometry.tunnel;
     if (state.x > tunnel.x + RADIUS && state.x < tunnel.x + tunnel.width - RADIUS
-      && state.ducking && input.down && (state.scene !== 2 || state.helped)) {
+      && state.ducking && input.down && state.helped) {
       state.tunnelEntered = true;
     }
     if (state.tunnelEntered && state.x > tunnel.x + tunnel.width + RADIUS) markSolved(state);
@@ -176,15 +206,18 @@ function checkChallenge(state, geometry, input) {
   if (geometry.gap && state.grounded) {
     // A bank supports the feet over its last 12 pixels. Recognize the actual
     // landing immediately, before a new jump can replace the jump's origin.
-    if (state.scene === 4 && state.jumped && state.jumpOriginX <= geometry.gap.left + 12
+    if (id === 'charco' && state.jumped && state.jumpOriginX <= geometry.gap.left + 12
       && state.x + 12 >= geometry.gap.right) markSolved(state);
     if (state.x > geometry.gap.right + RADIUS && bridgeReady(state)
       && state.helpProgress >= 1) markSolved(state);
   }
+  if (geometry.reeds && state.x > geometry.reeds.right + RADIUS) markSolved(state);
+  if (id === 'zanahoria' && state.x > geometry.carrotX + 40) markSolved(state);
 }
 
 function step(state, input, dt) {
   const geometry = SCENE_GEOMETRY[state.scene];
+  const id = sceneId(state);
   const previousX = state.x;
   state.time += dt;
   state.sceneTime += dt;
@@ -192,16 +225,28 @@ function step(state, input, dt) {
   state.celebration = Math.max(0, state.celebration - dt);
   state.toastTimer = Math.max(0, state.toastTimer - dt);
 
-  if (state.helped) state.helpProgress = Math.min(1, state.helpProgress + dt / 1.05);
+  if (state.elephantRevealed) {
+    state.revealProgress = Math.min(1, state.revealProgress + dt / ELEPHANT_REVEAL_DURATION);
+  }
+  if (state.helped) {
+    const duration = id === 'serpiente' ? SNAKE_HELP_DURATION : 1.05;
+    state.helpProgress = Math.min(1, state.helpProgress + dt / duration);
+  }
   if (geometry.liftY !== undefined && state.helped) {
-    const p = state.helpProgress;
-    const eased = p * p * (3 - 2 * p);
-    state.assistY = GROUND - (GROUND - geometry.liftY) * eased;
+    let progress = state.helpProgress;
+    if (id === 'serpiente') {
+      state.snakePhase = progress >= 1 ? 'resting'
+        : progress >= SNAKE_LOWERING_PROGRESS ? 'lifting' : 'lowering';
+      progress = clamp((progress - SNAKE_LOWERING_PROGRESS) / (1 - SNAKE_LOWERING_PROGRESS), 0, 1);
+      // Lower the head before the loop begins raising the rabbit. A single
+      // help action controls both phases, including at reduced motion.
+      if (state.snakePhase === 'lifting') state.lifting = true;
+    }
+    state.assistY = GROUND - (GROUND - geometry.liftY) * eased(progress);
   }
 
   const tunnel = geometry.tunnel;
-  const insideTunnel = tunnel && overlaps(state.x, tunnel)
-    && state.y > tunnel.top && state.y - HEIGHT_STANDING < tunnel.ceiling;
+  const insideTunnel = tunnel && state.helped && overlaps(state.x, tunnel);
   // Keep the head safe when down is released beneath the ceiling; movement
   // resumes only while down is held. Thus a single tap cannot bypass a tunnel.
   state.ducking = Boolean(input.down || insideTunnel);
@@ -214,20 +259,24 @@ function step(state, input, dt) {
   state.vx += Math.sign(target - state.vx) * change;
   if (insideTunnel && !input.down) state.vx = 0;
 
-  let usedAction = false;
-  if (input.action && state.scene === 9 && state.grounded
-    && Math.abs(state.x - geometry.friendX) <= 105) {
-    state.mode = 'ending';
-    state.vx = 0;
-    state.vy = 0;
-    state.completed = [...state.completed, SCENES[state.scene].id];
-    state.celebration = 4;
-    state.message = '¡Llegaste! Compartir el camino lo hace más bonito.';
+  if (input.action && id === 'pared' && state.grounded && state.x >= geometry.lookFromX) {
+    markSolved(state);
+    enterNextScene(state);
     return;
   }
-  if (input.action) usedAction = help(state, geometry);
+  let usedAction = false;
+  if (input.action && id === 'conejo' && state.grounded
+    && Math.abs(state.x - geometry.friendX) <= 105) {
+    usedAction = true;
+    state.friendGreeted = true;
+    state.solved = true;
+    state.celebration = 1.2;
+    say(state, '¡Hola, amigo! Vamos juntos al huerto. Sigue con →.', 2);
+  }
+  if (input.action && !usedAction) usedAction = help(state, geometry);
   if ((input.up || (input.action && !usedAction)) && state.grounded
-    && !state.lifting && !insideTunnel) {
+    && !state.lifting && !insideTunnel
+    && !(id === 'serpiente' && state.helped && state.helpProgress < 1)) {
     state.vy = -JUMP_SPEED;
     state.grounded = false;
     state.jumped = true;
@@ -236,6 +285,18 @@ function step(state, input, dt) {
 
   const rectangles = obstacles(state, geometry);
   let nextX = Math.max(40, state.x + state.vx * dt);
+  // Both mouths belong to the same underground passage. They cannot be
+  // entered upright, nor before asking the fox to open the way.
+  if (tunnel && !(state.helped && input.down)) {
+    if (state.vx > 0 && state.x + RADIUS <= tunnel.x + EPSILON && nextX + RADIUS > tunnel.x) {
+      nextX = tunnel.x - RADIUS;
+      state.vx = 0;
+    } else if (state.vx < 0 && state.x - RADIUS >= tunnel.x + tunnel.width - EPSILON
+      && nextX - RADIUS < tunnel.x + tunnel.width) {
+      nextX = tunnel.x + tunnel.width + RADIUS;
+      state.vx = 0;
+    }
+  }
   const height = bodyHeight(state);
   for (const rectangle of rectangles) {
     if (state.y <= rectangle.top + EPSILON || state.y - height >= rectangle.bottom - EPSILON) continue;
@@ -249,9 +310,14 @@ function step(state, input, dt) {
       state.vx = 0;
     }
   }
-  state.x = Math.min(nextX, state.scene === 9 || !state.solved ? WIDTH - 65 : WIDTH);
+  state.x = Math.min(nextX, state.solved ? sceneWidth(state) : sceneWidth(state) - 65);
 
-  if (state.lifting && state.x >= geometry.liftLeft - RADIUS
+  if (tunnel && state.helped && overlaps(state.x, tunnel)) {
+    state.y = tunnelFloorAt(state.x, tunnel);
+    state.vy = 0;
+    state.grounded = true;
+    state.ducking = true;
+  } else if (state.lifting && state.x >= geometry.liftLeft - RADIUS
     && state.x <= geometry.liftRight + RADIUS) {
     state.y = state.assistY;
     state.vy = 0;
@@ -295,7 +361,22 @@ function step(state, input, dt) {
   state.walkTime += Math.abs(state.x - previousX) / SPEED;
   if (state.y > HEIGHT + 100) recover(state, geometry);
   checkChallenge(state, geometry, input);
-  if (state.solved && state.scene < SCENES.length - 1 && state.x >= EXIT) enterNextScene(state);
+  state.hiddenInReeds = Boolean(geometry.reeds
+    && state.x - RADIUS >= geometry.reeds.left && state.x + RADIUS <= geometry.reeds.right);
+  state.cameraX = geometry.reeds ? clamp(state.x - 520, 0, sceneWidth(state) - WIDTH) : 0;
+  state.cameraY = id === 'serpiente' ? Math.min(0, state.y - 340) : 0;
+  if (state.solved && state.x >= sceneWidth(state) - 45) {
+    if (id === 'conejo' && state.friendGreeted) {
+      state.mode = 'ending';
+      state.vx = 0;
+      state.vy = 0;
+      state.completed = [...state.completed, id];
+      state.celebration = 4;
+      state.message = getHint(state);
+      return;
+    }
+    if (state.scene < SCENES.length - 1) enterNextScene(state);
+  }
   state.message = getHint(state);
 }
 
@@ -317,27 +398,36 @@ export function getHint(state) {
   if (state.mode === 'title') return 'Flechas para moverte. Espacio para saltar y pedir ayuda.';
   if (state.mode === 'ending') return '¡Llegaste! Compartir el camino lo hace más bonito.';
   if (state.toastTimer > 0) return state.toast;
+  if (state.friendGreeted) return 'Camina con tu amigo hacia el huerto con →.';
   if (state.solved) return '¡Prueba superada! Sigue hacia la derecha.';
   const geometry = SCENE_GEOMETRY[state.scene];
+  const id = sceneId(state);
   if (state.lifting) return 'Tu amigo te está subiendo. Puedes avanzar con las flechas.';
+  if (id === 'serpiente' && state.snakePhase === 'lowering') return 'La serpiente baja la cabeza. Espera junto a ella.';
+  if (id === 'elefante' && state.elephantRevealed && state.revealProgress < 1) {
+    return 'El elefante se está dando la vuelta.';
+  }
   if (geometry.helperX !== undefined && !state.helped) {
     if (Math.abs(state.x - geometry.helperX) <= 105) {
-      return state.scene === 6 ? 'Pulsa espacio para despertar al cocodrilo.'
-        : `Pulsa espacio para pedir ayuda ${state.scene === 1 || state.scene === 5 || state.scene === 8 ? 'a la' : 'al'} ${SCENES[state.scene].helper}.`;
+      if (id === 'elefante' && !state.elephantRevealed) return 'Pulsa espacio para llamar a esa gran silueta.';
+      return id === 'cocodrilo' ? 'Pulsa espacio para despertar al cocodrilo.'
+        : `Pulsa espacio para pedir ayuda ${['tortuga', 'jirafa', 'serpiente'].includes(id) ? 'a la' : 'al'} ${SCENES[state.scene].helper}.`;
     }
     return 'Acércate a tu amigo con la flecha derecha.';
   }
-  switch (state.scene) {
-    case 0: return state.x < 430 ? 'Avanza con → hasta la piedra.' : 'Pulsa espacio o ↑ y avanza para saltar la piedra.';
-    case 1: return state.y > 500 ? 'Vuelve junto a la tortuga y pulsa espacio para subir.' : 'Avanza por el caparazón y salta hacia la roca con espacio o ↑.';
-    case 2: return 'Mantén ↓ y avanza con → para pasar por el túnel.';
-    case 3: return state.y > 500 ? 'Vuelve junto al elefante y pulsa espacio para subir.' : 'Avanza con → sobre la roca. ¡Gracias, elefante!';
-    case 4: return state.x < 400 ? 'Acércate al charco con →.' : 'Desde la orilla, pulsa espacio o ↑ y avanza para saltar.';
-    case 5: return 'Cruza el puente de la jirafa con →.';
-    case 6: return 'Camina sobre el lomo del cocodrilo con →.';
-    case 7: return 'Mantén ↓ y → para caminar bajo los juncos.';
-    case 8: return state.y > 500 ? 'Vuelve junto a la serpiente y pulsa espacio para subir.' : 'Avanza con → hacia lo alto de la pared.';
-    case 9: return Math.abs(state.x - geometry.friendX) <= 105 ? '¡Tu amigo! Pulsa espacio para saludarlo.' : 'Sigue el camino hasta tu amigo, el conejo marrón.';
+  switch (id) {
+    case 'piedra': return state.x < 430 ? 'Avanza con → hasta la piedra.' : 'Pulsa espacio o ↑ y avanza para saltar la piedra.';
+    case 'tortuga': return state.y > 500 ? 'Vuelve junto a la tortuga y pulsa espacio para subir.' : 'Avanza por el caparazón y salta hacia la roca con espacio o ↑.';
+    case 'zorro': return 'Mantén ↓ y avanza con → para pasar por el túnel; con ← puedes volver.';
+    case 'elefante': return state.y > 500 ? 'Vuelve junto al elefante y pulsa espacio para subir.' : 'Avanza con → sobre la roca. ¡Gracias, elefante!';
+    case 'charco': return state.x < 400 ? 'Acércate al charco con →.' : 'Desde la orilla, pulsa espacio o ↑ y avanza para saltar.';
+    case 'jirafa': return 'Cruza el puente de la jirafa con →.';
+    case 'cocodrilo': return 'Camina sobre el lomo del cocodrilo con →.';
+    case 'juncos': return 'Sigue con → entre los juncos. Con ← puedes retroceder.';
+    case 'pared': return state.x >= geometry.lookFromX ? 'Pulsa espacio para mirar hacia arriba de la montaña.' : 'Acércate a la pared con →.';
+    case 'serpiente': return state.y > 500 ? 'Vuelve junto a la serpiente y pulsa espacio para subir.' : 'Avanza con → hacia lo alto de la pared.';
+    case 'zanahoria': return 'Una zanahoria en la cima. Acércate y sigue con →.';
+    case 'conejo': return Math.abs(state.x - geometry.friendX) <= 105 ? '¡Tu amigo! Pulsa espacio para saludarlo.' : 'Sigue el camino hasta tu amigo, el conejo marrón.';
     default: return 'Sigue el camino con →.';
   }
 }
